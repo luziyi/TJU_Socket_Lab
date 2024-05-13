@@ -1,5 +1,7 @@
 # TJU-Socket-Lab
 
+参考资料
+
 [1]RFC 2616, Hypertext Transfer Protocol --HTTP/1.1, http://www.ietf.org/rfc/rfc2616.txt 
 
 [2]RFC 3875,Common Gateway Interface,   http://www.ietf.org/rfc/rfc3875.txt
