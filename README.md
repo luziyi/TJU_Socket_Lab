@@ -4,13 +4,13 @@
 
 参考资料
 
-[1]RFC 2616, Hypertext Transfer Protocol --HTTP/1.1, http://www.ietf.org/rfc/rfc2616.txt 
+[1]RFC 2616, Hypertext Transfer Protocol --HTTP/1.1, [http://www.ietf.org/rfc/rfc2616.txt](http://www.ietf.org/rfc/rfc2616.txt)
 
-[2]RFC 3875,Common Gateway Interface,   http://www.ietf.org/rfc/rfc3875.txt
+[2]RFC 3875,Common Gateway Interface,   [http://www.ietf.org/rfc/rfc3875.txt](http://www.ietf.org/rfc/rfc3875.txt)
 
-[3]RFC 2396, Uniform Resource Identifiers (URI): Generic Syntax, http://www.ietf.org/rfc/rfc2396.txt
+[3]RFC 2396, Uniform Resource Identifiers (URI): Generic Syntax, [http://www.ietf.org/rfc/rfc2396.txt](http://www.ietf.org/rfc/rfc2396.txt)
 
-[4]ApacheLog Files, https://httpd.apache.org/docs/2.4/logs.html
+[4]ApacheLog Files, [https://httpd.apache.org/docs/2.4/logs.html](https://httpd.apache.org/docs/2.4/logs.html)
 
 [5]Persistent Connection: [https://en.m.wikipedia.org/wiki/HTTP_persistent_connection](https://en.m.wikipedia.org/wiki/HTTP_persistent_connection)
 
