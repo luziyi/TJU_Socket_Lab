@@ -6,7 +6,11 @@
                 "${workspaceFolder}/**",
                 "${default}"
             ],
-            "defines": [],
+            "defines": [
+    "__linux__",
+    "__x86_64__",
+    "_GNU_SOURCE"
+],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
             "cppStandard": "c++14",
