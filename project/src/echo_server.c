@@ -1,15 +1,15 @@
 /******************************************************************************
-* echo_server.c                                                               *
-*                                                                             *
-* Description: This file contains the C source code for an echo server.  The  *
-*              server runs on a hard-coded port and simply write back anything*
-*              sent to it by connected clients.  It does not support          *
-*              concurrent clients.                                            *
-*                                                                             *
-* Authors: Athula Balachandran <abalacha@cs.cmu.edu>,                         *
-*          Wolf Richter <wolf@cs.cmu.edu>                                     *
-*                                                                             *
-*******************************************************************************/
+ * echo_server.c                                                               *
+ *                                                                             *
+ * Description: This file contains the C source code for an echo server.  The  *
+ *              server runs on a hard-coded port and simply write back anything*
+ *              sent to it by connected clients.  It does not support          *
+ *              concurrent clients.                                            *
+ *                                                                             *
+ * Authors: Athula Balachandran <abalacha@cs.cmu.edu>,                         *
+ *          Wolf Richter <wolf@cs.cmu.edu>                                     *
+ *                                                                             *
+ *******************************************************************************/
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -18,12 +18,15 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include "parse.h" 
+#include "parse.h"
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
 
 #define DEBUG
 
+
+char message_buffer[BUF_SIZE * 10]; // 一个足够大的缓冲区来保存累积的数据
+int message_length = 0;
 
 int close_socket(int sock)
 {
@@ -35,7 +38,7 @@ int close_socket(int sock)
     return 0;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int sock, client_sock;
     ssize_t readret;
@@ -44,7 +47,7 @@ int main(int argc, char* argv[])
     char buf[BUF_SIZE];
 
     fprintf(stdout, "----- Echo Server -----\n");
-    
+
     /* all networked programs must create a socket */
     if ((sock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
     {
@@ -57,13 +60,12 @@ int main(int argc, char* argv[])
     addr.sin_addr.s_addr = INADDR_ANY;
 
     /* servers bind sockets to ports---notify the OS they accept connections */
-    if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)))
+    if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)))
     {
         close_socket(sock);
         fprintf(stderr, "Failed binding socket.\n");
         return EXIT_FAILURE;
     }
-
 
     if (listen(sock, 5))
     {
@@ -76,7 +78,7 @@ int main(int argc, char* argv[])
     while (1)
     {
         cli_size = sizeof(cli_addr);
-        if ((client_sock = accept(sock, (struct sockaddr *) &cli_addr,&cli_size)) == -1)
+        if ((client_sock = accept(sock, (struct sockaddr *)&cli_addr, &cli_size)) == -1)
         {
             close(sock);
             fprintf(stderr, "Error accepting connection.\n");
@@ -85,42 +87,68 @@ int main(int argc, char* argv[])
 
         readret = 0;
 
-        while((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1) // 如果读取成功
+        while ((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
         {
 #ifdef DEBUG
-            fprintf(stdout, "Received %d bytes.\n", (int) readret);
-            fprintf(stdout, "Received message: %s\n", buf);
+            fprintf(stdout, "Received %d bytes.\n", (int)readret);
+            fprintf(stdout, "Received message: %.*s\n", (int)readret, buf);
 #endif
-        // Parse the buffer
-            Request* request = parse(buf, readret, client_sock);
-            if (request == NULL)
+
+            // 将接收到的数据追加到消息缓冲区
+            if (message_length + readret < sizeof(message_buffer))
             {
-                fprintf(stderr, "Failed to parse request.\n");
-                // Send error response to client
-                char error_msg[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
-                send(client_sock, error_msg, sizeof(error_msg) - 1, 0);
+                memcpy(message_buffer + message_length, buf, readret);
+                message_length += readret;
+                message_buffer[message_length] = '\0'; // 确保缓冲区以NULL结尾
             }
             else
             {
-                // Here you can create a response based on the parsed request
-                // For simplicity, let's just send back a success message
-                char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
-                send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
-
-                // Free the request object
-                free(request->headers);
-                free(request);
+                fprintf(stderr, "Message buffer overflow.\n");
+                break;
             }
 
-       /*     if (send(client_sock, buf, readret, 0) != readret) // 这里是在发送数据，将读取到的buf中的数据发送回去，但是我们要实现将buf中的内容解析之后返回正确的结果。要用到lex和yacc
+            // 检查是否接收到完整的HTTP请求（以\r\n\r\n作为结束标志）
+            char *end_of_message = strstr(message_buffer, "\r\n\r\n");
+            if (end_of_message != NULL)
             {
-                close_socket(client_sock);
-                close_socket(sock);
-                fprintf(stderr, "Error sending to client.\n");
-                return EXIT_FAILURE;
-            }*/
-            memset(buf, 0, BUF_SIZE);
-        } 
+                // 计算完整消息的长度
+                int complete_message_length = end_of_message - message_buffer + 4;
+
+                // 解析完整的HTTP请求
+                Request *request = parse(message_buffer, complete_message_length, client_sock);
+                if (request == NULL)
+                {
+                    fprintf(stderr, "Failed to parse request.\n");
+                    // 发送错误响应给客户端
+                    char error_msg[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
+                    send(client_sock, error_msg, sizeof(error_msg) - 1, 0);
+                }
+                else
+                {
+                    // 发送成功响应
+                    char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
+                    send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
+
+                    // 释放请求对象
+                    free(request->headers);
+                    free(request);
+                }
+
+                // 将剩余未处理的数据移动到消息缓冲区的开头
+                int remaining_data_length = message_length - complete_message_length;
+                memmove(message_buffer, message_buffer + complete_message_length, remaining_data_length);
+                message_length = remaining_data_length;
+                message_buffer[message_length] = '\0';
+            }
+        }
+
+        if (readret < 0)
+        {
+            perror("recv");
+        }
+
+        // 关闭客户端套接字
+        // close(client_sock);
 
         if (readret == -1) // 如果读取失败
         {

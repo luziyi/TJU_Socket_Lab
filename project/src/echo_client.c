@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 
     // char msg[BUF_SIZE]; 
     // fgets(msg, BUF_SIZE, stdin); // 从控制台输入数据，这里修改为从文件接收数据
-
+    char msg[BUF_SIZE]; // 从文件读取的请求存储在msg中
     /* 从文件读取请求 */
     FILE *file = fopen("./samples/request_400", "r");
     if (file == NULL) {
@@ -78,18 +78,11 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
     char line[BUF_SIZE];
-    size_t total_bytes_sent = 0;
     while (fgets(line, sizeof(line), file) != NULL) {
-        size_t bytes_sent = send(sock, line, strlen(line), 0);
-        if (bytes_sent == -1) {
-            fprintf(stderr, "Failed to send data\n");
-            fclose(file);
-            return EXIT_FAILURE;
-        }
-        total_bytes_sent += bytes_sent;
+        fprintf(stdout, "Sending %s", line);
+        send(sock, line, strlen(line), 0); // 向服务端发送数据
     }
     fclose(file);
-    fprintf(stdout, "Sent %zu bytes\n", total_bytes_sent);
     /* 从文件读取请求 */
 
     // fprintf(stdout, "Sending %s", msg);
