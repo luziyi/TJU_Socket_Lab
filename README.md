@@ -31,3 +31,5 @@
 [5]The GNU C Library, [https://www.gnu.org/software/libc/manual/](https://www.gnu.org/software/libc/manual/)
 
 [6]Valgrind, [https://www.valgrind.org](https://www.valgrind.org)
+
+https://pubs.opengroup.org/onlinepubs/009695399/basedefs/netdb.h.html

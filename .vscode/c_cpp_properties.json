@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${default}"
+                "${default}",
+                "./project/include"
             ],
             "defines": [
                 "__linux__",

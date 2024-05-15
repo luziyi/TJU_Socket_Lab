@@ -20,8 +20,10 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
-#define ECHO_PORT 9999
-#define BUF_SIZE 4096
+#define ECHO_PORT 9999    // 端口
+#define BUF_SIZE 4096   // 缓冲区大小
+
+#define DEBUG
 
 int main(int argc, char* argv[])
 {
@@ -31,11 +33,11 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    char buf[BUF_SIZE];
+    char buf[BUF_SIZE]; // 数据缓冲区
         
-    int status, sock;
+    int status, sock; // status: getaddrinfo return value, sock: socket file descriptor
     struct addrinfo hints;
-	memset(&hints, 0, sizeof(struct addrinfo));
+	memset(&hints, 0, sizeof(struct addrinfo)); //初始化
     struct addrinfo *servinfo; //will point to the results
     hints.ai_family = AF_INET;  //IPv4
     hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
@@ -70,7 +72,7 @@ int main(int argc, char* argv[])
         buf[bytes_received] = '\0';
         fprintf(stdout, "Received %s", buf);
     }        
-
+    
     freeaddrinfo(servinfo);
     close(sock);    
     return EXIT_SUCCESS;

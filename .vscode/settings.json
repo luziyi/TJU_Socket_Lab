@@ -73,6 +73,7 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "netdb.h": "c"
+        "netdb.h": "c",
+        "in.h": "c"
     }
 }

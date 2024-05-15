@@ -22,6 +22,9 @@
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
 
+#define DEBUG
+
+
 int close_socket(int sock)
 {
     if (close(sock))
