@@ -18,7 +18,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-
+#include "parse.h" 
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
 
@@ -91,13 +91,34 @@ int main(int argc, char* argv[])
             fprintf(stdout, "Received %d bytes.\n", (int) readret);
             fprintf(stdout, "Received message: %s\n", buf);
 #endif
-            if (send(client_sock, buf, readret, 0) != readret) // 这里是在发送数据，将读取到的buf中的数据发送回去，但是我们要实现将buf中的内容解析之后返回正确的结果。要用到lex和yacc
+        // Parse the buffer
+            Request* request = parse(buf, readret, client_sock);
+            if (request == NULL)
+            {
+                fprintf(stderr, "Failed to parse request.\n");
+                // Send error response to client
+                char error_msg[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
+                send(client_sock, error_msg, sizeof(error_msg) - 1, 0);
+            }
+            else
+            {
+                // Here you can create a response based on the parsed request
+                // For simplicity, let's just send back a success message
+                char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
+                send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
+
+                // Free the request object
+                free(request->headers);
+                free(request);
+            }
+
+       /*     if (send(client_sock, buf, readret, 0) != readret) // 这里是在发送数据，将读取到的buf中的数据发送回去，但是我们要实现将buf中的内容解析之后返回正确的结果。要用到lex和yacc
             {
                 close_socket(client_sock);
                 close_socket(sock);
                 fprintf(stderr, "Error sending to client.\n");
                 return EXIT_FAILURE;
-            }
+            }*/
             memset(buf, 0, BUF_SIZE);
         } 
 
