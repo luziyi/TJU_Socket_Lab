@@ -76,8 +76,7 @@ int main(int argc, char* argv[])
     while (1)
     {
         cli_size = sizeof(cli_addr);
-        if ((client_sock = accept(sock, (struct sockaddr *) &cli_addr,
-                                    &cli_size)) == -1)
+        if ((client_sock = accept(sock, (struct sockaddr *) &cli_addr,&cli_size)) == -1)
         {
             close(sock);
             fprintf(stderr, "Error accepting connection.\n");
@@ -86,9 +85,12 @@ int main(int argc, char* argv[])
 
         readret = 0;
 
-        while((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
+        while((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1) // 如果读取成功
         {
-            if (send(client_sock, buf, readret, 0) != readret)
+#ifdef DEBUG
+            fprintf(stdout, "Received %d bytes.\n", (int) readret);
+#endif
+            if (send(client_sock, buf, readret, 0) != readret) // 这里是在发送数据，将读取到的buf中的数据发送回去，但是我们要实现将buf中的内容解析之后返回正确的结果。要用到lex和yacc
             {
                 close_socket(client_sock);
                 close_socket(sock);
@@ -98,7 +100,7 @@ int main(int argc, char* argv[])
             memset(buf, 0, BUF_SIZE);
         } 
 
-        if (readret == -1)
+        if (readret == -1) // 如果读取失败
         {
             close_socket(client_sock);
             close_socket(sock);

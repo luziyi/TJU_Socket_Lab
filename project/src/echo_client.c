@@ -23,7 +23,7 @@
 #define ECHO_PORT 9999    // 端口
 #define BUF_SIZE 4096   // 缓冲区大小
 
-#define DEBUG
+#define DEBUG // DEBUG开关
 
 int main(int argc, char* argv[])
 {
@@ -43,13 +43,14 @@ int main(int argc, char* argv[])
     hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
     hints.ai_flags = AI_PASSIVE; //fill in my IP for me
 
-    if ((status = getaddrinfo(argv[1], argv[2], &hints, &servinfo)) != 0) 
+    if ((status = getaddrinfo(argv[1], argv[2], &hints, &servinfo)) != 0)  // 如果getaddrinfo返回非0，说明出错，获取服务器地址失败
     {
         fprintf(stderr, "getaddrinfo error: %s \n", gai_strerror(status));
         return EXIT_FAILURE;
     }
 
-    if((sock = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol)) == -1)
+
+    if((sock = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol)) == -1) // 如果socket返回-1，说明出错，出错是因为没有成功连接到服务器
     {
         fprintf(stderr, "Socket failed");
         return EXIT_FAILURE;
@@ -57,17 +58,38 @@ int main(int argc, char* argv[])
     
     if (connect (sock, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
     {
-        fprintf(stderr, "Connect");
+        fprintf(stderr, "Connect"); // 连接失败？
         return EXIT_FAILURE;
     }
-        
+
+
+#ifdef DEBUG
+    fprintf(stdout, "Connected to server\n"); //调试信息，如果成功连接则输出
+#endif
+
+
     char msg[BUF_SIZE]; 
-    fgets(msg, BUF_SIZE, stdin);
-    
+    // fgets(msg, BUF_SIZE, stdin); // 从控制台输入数据，这里修改为从文件接收数据
+
+    /* 从文件读取请求 */
+    FILE *file = fopen("../sample/request_400", "r");
+    if (file == NULL) {
+        fprintf(stderr, "Failed to open file\n");
+        return EXIT_FAILURE;
+    }
+    char line[BUF_SIZE];
+    while (fgets(msg, sizeof(msg), msg) != NULL) {
+        fprintf(stdout, "Sending %s", msg);
+        send(sock, msg, strlen(msg), 0); // 向服务端发送数据
+    }
+    fclose(file);
+    /* 从文件读取请求 */
+
+    // fprintf(stdout, "Sending %s", msg);
+    // send(sock, msg , strlen(msg), 0); // 向服务端发送数据
+
     int bytes_received;
-    fprintf(stdout, "Sending %s", msg);
-    send(sock, msg , strlen(msg), 0);
-    if((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1)
+    if((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1) // 从服务器获得的消息，服务端经过解析之后发送的
     {
         buf[bytes_received] = '\0';
         fprintf(stdout, "Received %s", buf);
