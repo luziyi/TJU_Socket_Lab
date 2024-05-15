@@ -89,6 +89,7 @@ int main(int argc, char* argv[])
         {
 #ifdef DEBUG
             fprintf(stdout, "Received %d bytes.\n", (int) readret);
+            fprintf(stdout, "Received message: %s\n", buf);
 #endif
             if (send(client_sock, buf, readret, 0) != readret) // 这里是在发送数据，将读取到的buf中的数据发送回去，但是我们要实现将buf中的内容解析之后返回正确的结果。要用到lex和yacc
             {
