@@ -74,6 +74,8 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "netdb.h": "c",
-        "in.h": "c"
+        "in.h": "c",
+        "parse.h": "c",
+        "stdio.h": "c"
     }
 }

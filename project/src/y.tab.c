@@ -492,7 +492,7 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint8 yyrline[] =
 {
        0,   113,   113,   114,   117,   123,   127,   156,   157,   160,
-     163,   171,   175,   187,   191,   195,   200,   207,   221,   222
+     163,   171,   175,   187,   191,   195,   201,   208,   225,   227
 };
 #endif
 
@@ -1338,7 +1338,7 @@ yyreduce:
   case 11:
 #line 171 "src/parser.y" /* yacc.c:1646  */
     {
-	YPRINTF("text: Matched rule 1.\n");
+    YPRINTF("text: Matched rule 1.\n");
 	snprintf((yyval.str), 8192, "%c", (yyvsp[0].i));
 }
 #line 1345 "y.tab.c" /* yacc.c:1646  */
@@ -1360,7 +1360,7 @@ yyreduce:
   case 13:
 #line 187 "src/parser.y" /* yacc.c:1646  */
     {
-	YPRINTF("OWS: Matched rule 1\n");
+   YPRINTF("OWS: Matched rule 1\n");
 	(yyval.str)[0]=0;
 }
 #line 1367 "y.tab.c" /* yacc.c:1646  */
@@ -1385,9 +1385,9 @@ yyreduce:
     break;
 
   case 16:
-#line 200 "src/parser.y" /* yacc.c:1646  */
+#line 201 "src/parser.y" /* yacc.c:1646  */
     {
-	YPRINTF("request_Line:\n%s\n%s\n%s\n",(yyvsp[-5].str), (yyvsp[-3].str),(yyvsp[-1].str));
+	    YPRINTF("request_Line:\n%s\n%s\n%s\n",(yyvsp[-5].str), (yyvsp[-3].str),(yyvsp[-1].str));
     strcpy(parsing_request->http_method, (yyvsp[-5].str));
 	strcpy(parsing_request->http_uri, (yyvsp[-3].str));
 	strcpy(parsing_request->http_version, (yyvsp[-1].str));
@@ -1396,27 +1396,29 @@ yyreduce:
     break;
 
   case 17:
-#line 207 "src/parser.y" /* yacc.c:1646  */
+#line 208 "src/parser.y" /* yacc.c:1646  */
     {
-	YPRINTF("request_Header:\n%s\n%s\n",(yyvsp[-6].str),(yyvsp[-2].str));
+	      YPRINTF("request_Header:\n%s\n%s\n",(yyvsp[-6].str),(yyvsp[-2].str));
     strcpy(parsing_request->headers[parsing_request->header_count].header_name, (yyvsp[-6].str));
 	strcpy(parsing_request->headers[parsing_request->header_count].header_value, (yyvsp[-2].str));
-	parsing_request->headers = (Request_header *) realloc(parsing_request->headers, (1+(++parsing_request->header_count))*sizeof(Request_header));
+/* Dealing with longer header(longer than its previews value) */
+	parsing_request->headers = (Request_header *) realloc(parsing_request->headers, (1+(++parsing_request->header_count)) * sizeof(Request_header));
+
 }
-#line 1407 "y.tab.c" /* yacc.c:1646  */
+#line 1409 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 222 "src/parser.y" /* yacc.c:1646  */
+#line 227 "src/parser.y" /* yacc.c:1646  */
     {
-	YPRINTF("parsing_request: Matched Success.\n");
+       YPRINTF("parsing_request: Matched Success.\n");
 	return SUCCESS;
 }
-#line 1416 "y.tab.c" /* yacc.c:1646  */
+#line 1418 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1420 "y.tab.c" /* yacc.c:1646  */
+#line 1422 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1644,7 +1646,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 227 "src/parser.y" /* yacc.c:1906  */
+#line 233 "src/parser.y" /* yacc.c:1906  */
 
 
 /* C code */

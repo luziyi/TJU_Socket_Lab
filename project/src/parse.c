@@ -59,7 +59,7 @@ Request * parse(char *buffer, int size, int socketFd) {
         //TODO You will need to handle resizing this in parser.y
         request->headers = (Request_header *) malloc(sizeof(Request_header)*100);
 		set_parsing_options(buf, i, request);
-
+		//输出buf
 		if (yyparse() == SUCCESS) {
             return request;
 		}
