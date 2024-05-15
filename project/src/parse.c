@@ -49,6 +49,10 @@ Request * parse(char *buffer, int size, int socketFd) {
 
     //Valid End State
 	if (state == STATE_CRLFCRLF) {
+#ifdef DEBUG
+		LOG("TRY TO PARSE\n");
+		LOG("Parsing MSG\n%s\n" ,buf);
+#endif
 		Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
         //TODO You will need to handle resizing this in parser.y

@@ -208,7 +208,7 @@ request_header: token ows t_colon ows text ows t_crlf {
 	YPRINTF("request_Header:\n%s\n%s\n",$1,$5);
     strcpy(parsing_request->headers[parsing_request->header_count].header_name, $1);
 	strcpy(parsing_request->headers[parsing_request->header_count].header_value, $5);
-	parsing_request->header_count++;
+	parsing_request->headers = (Request_header *) realloc(parsing_request->headers, (1+(++parsing_request->header_count))*sizeof(Request_header));
 };
 
 
@@ -218,6 +218,7 @@ request_header: token ows t_colon ows text ows t_crlf {
  * All the best!
  *
  */
+request_header: request_header request_header; // 添加的
 request: request_line request_header t_crlf{
 	YPRINTF("parsing_request: Matched Success.\n");
 	return SUCCESS;
