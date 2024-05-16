@@ -81,7 +81,9 @@ int main(int argc, char* argv[])
     }
     char line[BUF_SIZE];
     while (fgets(line, sizeof(line), file) != NULL) {
+      //
         fprintf(stdout, "Sending %s", line);
+     //   #endif 
         send(sock, line, strlen(line), 0); // 向服务端发送数据
     }
     fclose(file);
@@ -94,9 +96,10 @@ int main(int argc, char* argv[])
     if((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1) // 从服务器获得的消息，服务端经过解析之后发送的
     {
         buf[bytes_received] = '\0';
+
         fprintf(stdout, "Received %s", buf);
-    }        
-    
+    }       
+
     freeaddrinfo(servinfo);
     close(sock);    
     return EXIT_SUCCESS;
