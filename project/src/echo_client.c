@@ -74,11 +74,7 @@ int main(int argc, char* argv[])
     char msg[BUF_SIZE]; // 从文件读取的请求存储在msg中
 
     /* 从文件读取请求 */
-<<<<<<< HEAD
-    FILE *file = fopen("./samples/request_head", "r");
-=======
     FILE *file = fopen(argv[3], "r");
->>>>>>> refs/remotes/origin/main
     if (file == NULL) {
         fprintf(stderr, "Failed to open file\n");
         return EXIT_FAILURE;
