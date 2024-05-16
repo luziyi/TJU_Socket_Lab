@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         }
 
         readret = 0;
-
+        memset(buf, 0, BUF_SIZE);
         while ((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
         {
 #ifdef DEBUG
@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
             }
 
             // 检查是否接收到完整的HTTP请求（以\r\n\r\n作为结束标志）
+            
             char *end_of_message = strstr(message_buffer, "\r\n\r\n");
             if (end_of_message != NULL)
             {
@@ -122,6 +123,7 @@ int main(int argc, char *argv[])
                     fprintf(stderr, "Failed to parse request.\n");
                     // 发送错误响应给客户端
                     char error_msg[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
+                    memset(buf, 0, BUF_SIZE);
                     send(client_sock, error_msg, sizeof(error_msg) - 1, 0);
                 }
                 else 
@@ -131,7 +133,7 @@ int main(int argc, char *argv[])
                     char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
                      send(client_sock,  message_buffer, sizeof( message_buffer) - 1, 0);
 
-                    
+                    memset(buf, 0, BUF_SIZE);
                     //send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
 
                     // 释放请求对象
@@ -143,6 +145,7 @@ int main(int argc, char *argv[])
                     send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
                     free(request->headers);
                     free(request);
+                    memset(buf, 0, BUF_SIZE);
                 }
 
                 // 将剩余未处理的数据移动到消息缓冲区的开头
@@ -152,7 +155,7 @@ int main(int argc, char *argv[])
                 message_buffer[message_length] = '\0';
             }
         }
-
+        
         if (readret < 0)
         {
             perror("recv");

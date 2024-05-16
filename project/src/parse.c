@@ -20,11 +20,15 @@ Request * parse(char *buffer, int size, int socketFd) {
 	char ch;
 	char buf[8192];
 	memset(buf, 0, 8192);
-
+	int n=0;
+	while(buffer[i] == '\r' || buffer[i] == '\n') {
+		i++;
+		n++;
+	}
 	state = STATE_START;
 	while (state != STATE_CRLFCRLF) {
 		char expected = 0;
-
+		
 		if (i == size)
 			break;
 
@@ -60,7 +64,7 @@ Request * parse(char *buffer, int size, int socketFd) {
         request->header_count=0;
         //TODO You will need to handle resizing this in parser.y
         request->headers = (Request_header *) malloc(sizeof(Request_header)*100);
-		set_parsing_options(buf, i, request);
+		set_parsing_options(buf, i-n, request);
 		//输出buf
 		if (yyparse() == SUCCESS) {
             return request;

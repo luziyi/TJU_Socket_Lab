@@ -23,7 +23,7 @@
 #define ECHO_PORT 9999    // 端口
 #define BUF_SIZE 4096   // 缓冲区大小
 
-#define DEBUG // DEBUG开关
+// #define DEBUG // DEBUG开关
 
 int main(int argc, char* argv[])
 {
@@ -71,7 +71,6 @@ int main(int argc, char* argv[])
 
     // char msg[BUF_SIZE]; 
     // fgets(msg, BUF_SIZE, stdin); // 从控制台输入数据，这里修改为从文件接收数据
-    char msg[BUF_SIZE]; // 从文件读取的请求存储在msg中
 
     /* 从文件读取请求 */
     FILE *file = fopen(argv[3], "r");
@@ -79,12 +78,11 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Failed to open file\n");
         return EXIT_FAILURE;
     }
-    char line[BUF_SIZE];
-    while (fgets(line, sizeof(line), file) != NULL) {
-      //
-        fprintf(stdout, "Sending %s", line);
-     //   #endif 
-        send(sock, line, strlen(line), 0); // 向服务端发送数据
+    char msg[BUF_SIZE];
+    size_t bytes_read;
+    while ((bytes_read = fread(msg, 1, sizeof(msg), file)) > 0) {
+        send(sock, msg, bytes_read, 0); // 向服务端发送数据
+        fprintf(stdout, "Sending %s", msg);
     }
     fclose(file);
     /* 从文件读取请求 */
