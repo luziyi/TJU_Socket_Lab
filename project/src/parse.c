@@ -1,5 +1,8 @@
 #include "parse.h"
-
+#define DEBUG
+#ifdef DEBUG
+#define LOG(...) fprintf(stdout, __VA_ARGS__)
+#endif
 
 /**
 * Given a char buffer returns the parsed request headers
@@ -27,7 +30,7 @@ Request * parse(char *buffer, int size, int socketFd) {
 
 		ch = buffer[i++];
 		buf[offset++] = ch;
-
+		LOG("%c",ch);
 		switch (state) {
 		case STATE_START:
 		case STATE_CRLF:
@@ -46,15 +49,13 @@ Request * parse(char *buffer, int size, int socketFd) {
 			state++;
 		else
 			state = STATE_START;
-		// printf("state:%d\n",state);
+		LOG("state:%d\n",state);
 	}
 
     //Valid End State
 	if (state == STATE_CRLFCRLF) {
-#ifdef DEBUG
 		LOG("TRY TO PARSE\n");
 		LOG("Parsing MSG\n%s\n" ,buf);
-#endif
 		Request *request = (Request *) malloc(sizeof(Request));
         request->header_count=0;
         //TODO You will need to handle resizing this in parser.y
