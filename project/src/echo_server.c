@@ -22,7 +22,7 @@
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
 
-#define DEBUG
+// #define DEBUG
 
 char c_get[50] = "GET";
 char c_post[50] = "POST";

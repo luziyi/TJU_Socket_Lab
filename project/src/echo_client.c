@@ -27,9 +27,9 @@
 
 int main(int argc, char* argv[])
 {
-    if (argc != 3)
+    if (argc != 4)
     {
-        fprintf(stderr, "usage: %s <server-ip> <port>",argv[0]);
+        fprintf(stderr, "usage: %s <server-ip> <port> <file-path>",argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -65,14 +65,20 @@ int main(int argc, char* argv[])
 
 #ifdef DEBUG
     fprintf(stdout, "Connected to server\n"); //调试信息，如果成功连接则输出
+    printf("file path: %s\n", argv[3]);
 #endif
 
 
     // char msg[BUF_SIZE]; 
     // fgets(msg, BUF_SIZE, stdin); // 从控制台输入数据，这里修改为从文件接收数据
     char msg[BUF_SIZE]; // 从文件读取的请求存储在msg中
+
     /* 从文件读取请求 */
+<<<<<<< HEAD
     FILE *file = fopen("./samples/request_head", "r");
+=======
+    FILE *file = fopen(argv[3], "r");
+>>>>>>> refs/remotes/origin/main
     if (file == NULL) {
         fprintf(stderr, "Failed to open file\n");
         return EXIT_FAILURE;
