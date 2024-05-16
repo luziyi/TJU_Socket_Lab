@@ -22,7 +22,7 @@
 #define ECHO_PORT 9999
 #define BUF_SIZE 4096
 
-#define DEBUG
+// #define DEBUG
 
 char message_buffer[BUF_SIZE * 10]; // 一个足够大的缓冲区来保存累积的数据
 int message_length = 0;
