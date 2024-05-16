@@ -86,61 +86,61 @@ int main(int argc, char *argv[])
         }
 
         readret = 0;
+        int complete_message_length;
 
         while ((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
         {
-#ifdef DEBUG
+    #ifdef DEBUG
             fprintf(stdout, "Received %d bytes.\n", (int)readret);
             fprintf(stdout, "Received message: %.*s\n", (int)readret, buf);
-#endif
-
+    #endif
             // 将接收到的数据追加到消息缓冲区
             if (message_length + readret < sizeof(message_buffer))
             {
-                memcpy(message_buffer + message_length, buf, readret);
-                message_length += readret;
-                message_buffer[message_length] = '\0'; // 确保缓冲区以NULL结尾
+            memcpy(message_buffer + message_length, buf, readret);
+            message_length += readret;
+            message_buffer[message_length] = '\0'; // 确保缓冲区以NULL结尾
             }
             else
             {
-                fprintf(stderr, "Message buffer overflow.\n");
-                break;
+            fprintf(stderr, "Message buffer overflow.\n");
+            break;
             }
 
             // 检查是否接收到完整的HTTP请求（以\r\n\r\n作为结束标志）
             char *end_of_message = strstr(message_buffer, "\r\n\r\n");
             if (end_of_message != NULL)
             {
-                // 计算完整消息的长度
-                int complete_message_length = end_of_message - message_buffer + 4;
+            // 计算完整消息的长度
+            complete_message_length = end_of_message - message_buffer + 4;
 
-                // 解析完整的HTTP请求
-                Request *request = parse(message_buffer, complete_message_length, client_sock);
-                if (request == NULL)
-                {
-                    fprintf(stderr, "Failed to parse request.\n");
-                    // 发送错误响应给客户端
-                    char error_msg[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
-                    send(client_sock, error_msg, sizeof(error_msg) - 1, 0);
-                }
-                else
-                {
-                    // 发送成功响应
-                    char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
-                    send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
+            // 解析完整的HTTP请求
 
-                    // 释放请求对象
-                    free(request->headers);
-                    free(request);
-                }
-
-                // 将剩余未处理的数据移动到消息缓冲区的开头
-                int remaining_data_length = message_length - complete_message_length;
-                memmove(message_buffer, message_buffer + complete_message_length, remaining_data_length);
-                message_length = remaining_data_length;
-                message_buffer[message_length] = '\0';
+            // 将剩余未处理的数据移动到消息缓冲区的开头
+            int remaining_data_length = message_length - complete_message_length;
+            memmove(message_buffer, message_buffer + complete_message_length, remaining_data_length);
+            message_length = remaining_data_length;
+            message_buffer[message_length] = '\0';
             }
         }
+            Request *request = parse(message_buffer, complete_message_length, client_sock);
+            if (request == NULL)
+            {
+                fprintf(stderr, "Failed to parse request.\n");
+                // 发送错误响应给客户端
+                char error_msg[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
+                send(client_sock, error_msg, sizeof(error_msg) - 1, 0);
+            }
+            else
+            {
+                // 发送成功响应
+                char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
+                send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
+
+                // 释放请求对象
+                free(request->headers);
+                free(request);
+            }
 
         if (readret < 0)
         {

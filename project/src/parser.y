@@ -8,7 +8,7 @@
 #include "parse.h"
 
 /* Define YACCDEBUG to enable debug messages for this lex file */
-//#define YACCDEBUG
+#define YACCDEBUG
 #define YYERROR_VERBOSE
 #ifdef YACCDEBUG
 #include <stdio.h>
@@ -203,7 +203,8 @@ request_line: token t_sp text t_sp text t_crlf {
 	strcpy(parsing_request->http_uri, $3);
 	strcpy(parsing_request->http_version, $5);
 }
-
+request_headers: request_header
+               | request_headers request_header;
 request_header: token ows t_colon ows text ows t_crlf {
 	YPRINTF("request_Header:\n%s\n%s\n",$1,$5);
     strcpy(parsing_request->headers[parsing_request->header_count].header_name, $1);
@@ -218,6 +219,7 @@ request_header: token ows t_colon ows text ows t_crlf {
  * All the best!
  *
  */
+
 //request_header: request_header request_header; // 添加的
 //递归
 reuqest_header_all: request_header {
@@ -226,6 +228,8 @@ reuqest_header_all: request_header {
 	| request_header reuqest_header_all {
 	YPRINTF("text: Request Header.\n");
 };
+
+
 request: request_line request_header t_crlf{
 	YPRINTF("parsing_request: Matched Success.\n");
 	return SUCCESS;
@@ -237,6 +241,18 @@ request: request_line request_header t_crlf{
 
 void set_parsing_options(char *buf, size_t siz, Request *request)
 {
+	YPRINTF("Setting parsing options\n");
+	YPRINTF("Buffer: ");
+	//输出buffer 遇到转义字符输出转义字符内容
+	for(int i = 0; i < siz; i++){
+		if(buf[i] == '\n'){
+			YPRINTF("\\n");
+		}else if(buf[i] == '\r'){
+			YPRINTF("\\r");
+		}else{
+			YPRINTF("%c", buf[i]);
+		}
+	}
     parsing_buf = buf;
 	parsing_offset = 0;
 	parsing_buf_siz = siz;

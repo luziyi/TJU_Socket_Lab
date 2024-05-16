@@ -6,7 +6,8 @@
 */
 Request * parse(char *buffer, int size, int socketFd) {
   //Differant states in the state machine
-  printf("%s",buffer);
+//   printf("%s",buffer);
+//   printf("state machine\n");
 	enum {
 		STATE_START = 0, STATE_CR, STATE_CRLF, STATE_CRLFCR, STATE_CRLFCRLF
 	};
@@ -45,7 +46,7 @@ Request * parse(char *buffer, int size, int socketFd) {
 			state++;
 		else
 			state = STATE_START;
-
+		// printf("state:%d\n",state);
 	}
 
     //Valid End State
