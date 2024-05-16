@@ -24,6 +24,9 @@
 
 #define DEBUG
 
+char c_get[50] = "GET";
+char c_post[50] = "POST";
+char c_head[50] = "HEAD";
 char message_buffer[BUF_SIZE * 10]; // 一个足够大的缓冲区来保存累积的数据
 int message_length = 0;
 
@@ -121,13 +124,20 @@ int main(int argc, char *argv[])
                     char error_msg[] = "HTTP/1.1 400 Bad Request\r\n\r\n";
                     send(client_sock, error_msg, sizeof(error_msg) - 1, 0);
                 }
-                else
+                else 
+                if(!strcmp(request->http_method, c_get) || !strcmp(request->http_method, c_head) || !strcmp(request->http_method, c_post))
                 {
                     // 发送成功响应
                     char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
                     send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
 
                     // 释放请求对象
+                    free(request->headers);
+                    free(request);
+                }
+                else {
+                     char success_msg[] = "HTTP/1.1 501 Not Implemented\r\n\r\n";
+                    send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
                     free(request->headers);
                     free(request);
                 }

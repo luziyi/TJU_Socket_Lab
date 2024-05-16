@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
     // fgets(msg, BUF_SIZE, stdin); // 从控制台输入数据，这里修改为从文件接收数据
     char msg[BUF_SIZE]; // 从文件读取的请求存储在msg中
     /* 从文件读取请求 */
-    FILE *file = fopen("./samples/request_get", "r");
+    FILE *file = fopen("./samples/request_head", "r");
     if (file == NULL) {
         fprintf(stderr, "Failed to open file\n");
         return EXIT_FAILURE;
