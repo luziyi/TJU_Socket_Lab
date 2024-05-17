@@ -1,17 +1,18 @@
 SRC_DIR := src
 OBJ_DIR := obj
-# all src files
+# 所有源文件
 SRC := $(wildcard $(SRC_DIR)/*.c)
-# all objects
-OBJ := $(OBJ_DIR)/y.tab.o $(OBJ_DIR)/lex.yy.o $(OBJ_DIR)/parse.o $(OBJ_DIR)/example.o
-# all binaries
+# 所有目标文件
+OBJ := $(OBJ_DIR)/y.tab.o $(OBJ_DIR)/lex.yy.o $(OBJ_DIR)/parse.o $(OBJ_DIR)/example.o 
+# 所有可执行文件
 BIN := example echo_server echo_client
-# C compiler
+# C编译器
 CC  := gcc
-# C PreProcessor Flag
+# C预处理器标志
 CPPFLAGS := -Iinclude
-# compiler flags
+# 编译器标志
 CFLAGS   := -g -Wall
+# 依赖文件
 # DEPS = parse.h y.tab.h
 
 default: all

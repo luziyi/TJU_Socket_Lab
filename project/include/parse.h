@@ -4,14 +4,14 @@
 
 #define SUCCESS 0
 
-//Header field
+// Header field
 typedef struct
 {
 	char header_name[4096];
 	char header_value[4096];
 } Request_header;
 
-//HTTP Request Header
+// HTTP Request Header
 typedef struct
 {
 	char http_version[50];
@@ -21,7 +21,7 @@ typedef struct
 	int header_count;
 } Request;
 
-Request* parse(char *buffer, int size,int socketFd);
+Request *parse(char *buffer, int size, int socketFd);
 
 // functions decalred in parser.y
 int yyparse();
