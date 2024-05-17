@@ -130,12 +130,13 @@ int main(int argc, char *argv[])
                 if(!strcmp(request->http_method, c_get) || !strcmp(request->http_method, c_head) || !strcmp(request->http_method, c_post))
                 {
                     // 发送成功响应
-                    char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
+                    // char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
                      send(client_sock,  message_buffer, sizeof( message_buffer) - 1, 0);
 
                     memset(buf, 0, BUF_SIZE);
-                    //send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
+                    // send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
 
+                    // 释放请求对象
                     // 释放请求对象
                     free(request->headers);
                     free(request);
