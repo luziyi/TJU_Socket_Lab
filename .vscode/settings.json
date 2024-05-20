@@ -74,6 +74,8 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "stdlib.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "ip.h": "c",
+        "response.h": "c"
     }
 }

@@ -1,5 +1,5 @@
 #include "parse.h"
-#define DEBUG
+// #define DEBUG
 
 /**
  * Given a char buffer returns the parsed request headers

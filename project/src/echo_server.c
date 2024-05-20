@@ -114,17 +114,10 @@ int main(int argc, char *argv[])
                 break;
             }
             // 如果message_buffer末尾的4个字符是\r\n\r\n，则表示消息结束
-#ifdef DEBUG
-            printf("Message buffer: %s\n", message_buffer);
-#endif
             char *end_of_message = strstr(buf, "\r\n\r\n");
             // 将第一个请求放入待解析区域
             if (end_of_message != NULL)
             {
-// 输出缓冲区内容
-#ifdef DEBUG
-                printf("Message buffer: %s\n", message_buffer);
-#endif
                 char *response_message;
                 int complete_message_length = end_of_message - buf + 4;      // 计算完整消息的长度
                 response_message = Response(buf, complete_message_length, client_sock); // 解析完整的HTTP请求
