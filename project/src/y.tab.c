@@ -71,7 +71,7 @@
 #include "parse.h"
 
 /* Define YACCDEBUG to enable debug messages for this lex file */
-// #define YACCDEBUG
+#define YACCDEBUG
 #define YYERROR_VERBOSE
 #ifdef YACCDEBUG
 #include <stdio.h>
@@ -1762,20 +1762,23 @@ void set_parsing_options(char *buf, size_t siz, Request *request)
 {
 	YPRINTF("Setting parsing options\n");
 	YPRINTF("Buffer: ");
-	//输出buffer 遇到转义字符输出转义字符内容
-	for(int i = 0; i < siz; i++){
-		if(buf[i] == '\n'){
-			YPRINTF("\\n");
-		}else if(buf[i] == '\r'){
-			YPRINTF("\\r");
-		}else{
-			YPRINTF("%c", buf[i]);
-		}
-	}
     parsing_buf = buf;
 	parsing_offset = 0;
 	parsing_buf_siz = siz;
     parsing_request = request;
+	//输出buffer 遇到转义字符输出转义字符内容
+	for(int i = 0; i < siz; i++){
+		if(parsing_buf[i] == '\n'){
+			YPRINTF("\\n");
+		}else if(parsing_buf[i] == '\r'){
+			YPRINTF("\\r");
+		}else{
+			YPRINTF("%c", parsing_buf[i]);
+		}
+	}
+	yyrestart(NULL);
+
+
 }
 
 void yyerror (const char *s) {fprintf (stderr, "%s\n", s);}

@@ -7,41 +7,42 @@ char c_get[50] = "GET";
 char c_post[50] = "POST";
 char c_head[50] = "HEAD";
 
-// #define DEBUG
-#ifdef DEBUG
-#define LOG(...) fprintf(stdout, __VA_ARGS__)
-#endif
+char RESPONSE_400[4096] = "HTTP/1.1 400 Bad request\r\n\r\n";
+char RESPONSE_404[4096] = "HTTP/1.1 404 Not Found\r\n\r\n";
+char RESPONSE_501[4096] = "HTTP/1.1 501 Not Implemented\r\n\r\n";
+char RESPONSE_505[4096] = "HTTP/1.1 505 HTTP Version not supported\r\n\r\n";
 
-char* Response(char *message_buffer, int complete_message_length, int client_sock)
+// #define DEBUG
+
+char *Response(char *message_buffer, int complete_message_length, int client_sock)
 {
+#ifdef DEBUG
+    printf("Message buffer: %s\n", message_buffer);
+#endif
     char *response_message;
     Request *request = parse(message_buffer, complete_message_length, client_sock);
-    printf("Request: %s %s %s\n", request->http_method, request->http_uri, request->http_version);
     if (request == NULL)
     {
-        fprintf(stderr, "Failed to parse request.\n");
-        // 发送错误响应给客户端
+        // fprintf(stderr, "Failed to parse request.\n"); // 发送错误响应给客户端
+        response_message = RESPONSE_400;
+    }
+    else if (strcmp(request->http_method, "HEAD") == 0)
+    {
+        // 处理HEAD请求
+        // response_message = handle_head_request(request);
         response_message = "HTTP/1.1 400 Bad Request\r\n\r\n";
     }
-    else if (!strcmp(request->http_method, c_get) || !strcmp(request->http_method, c_head) || !strcmp(request->http_method, c_post))
+    else if (strcmp(request->http_method, "POST") == 0)
     {
-        // 发送成功响应
-        // char success_msg[] = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
-        response_message = "HTTP/1.1 200 OK\r\n\r\nParsed Successfully";
-        response_message = message_buffer;
-        // send(client_sock, message_buffer, sizeof(message_buffer) - 1, 0);
-        // send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
-        free(request->headers);
-        free(request);
+        // 处理POST请求
+        // response_message = handle_post_request(request);
     }
     else
     {
-        // 发送错误响应给客户端
-        response_message = "HTTP/1.1 501 Not Implemented\r\n\r\n";
-        // send(client_sock, success_msg, sizeof(success_msg) - 1, 0);
-        free(request->headers);
-        free(request);
+        // 未知的请求方法
+        response_message = "HTTP/1.1 405 Method Not Allowed\r\n\r\n";
     }
+    free(request);
     printf("Response message: %s\n", response_message);
     return response_message;
 }

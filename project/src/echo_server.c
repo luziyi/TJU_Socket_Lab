@@ -3,8 +3,8 @@
  *                                                                             *
  * Description: This file contains the C source code for an echo server.  The  *
  *              server runs on a hard-coded port and simply write back anything*
- *              sent to it by connected clients.  It does not support          *
- *              concurrent clients.                                            *
+ *              sent to it by connected clients.  It supports persistent       *
+ *              connections.                                                   *
  *                                                                             *
  * Authors: Athula Balachandran <abalacha@cs.cmu.edu>,                         *
  *          Wolf Richter <wolf@cs.cmu.edu>                                     *
@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "response.h"
-#define ECHO_PORT 8888
+#define ECHO_PORT 9999
 #define BUF_SIZE 4096
 
 // #define DEBUG
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     {
         /**
          * 从客户端接受传入的连接。
-         * 
+         *
          * @param sock 服务器套接字描述符。
          * @param cli_addr 客户端地址结构。
          * @param cli_size 客户端地址结构的大小。
@@ -113,22 +113,30 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Message buffer overflow.\n");
                 break;
             }
-            char *end_of_message = strstr(message_buffer, "\r\n\r\n");
+            // 如果message_buffer末尾的4个字符是\r\n\r\n，则表示消息结束
+#ifdef DEBUG
+            printf("Message buffer: %s\n", message_buffer);
+#endif
+            char *end_of_message = strstr(buf, "\r\n\r\n");
+            // 将第一个请求放入待解析区域
             if (end_of_message != NULL)
             {
+// 输出缓冲区内容
+#ifdef DEBUG
+                printf("Message buffer: %s\n", message_buffer);
+#endif
                 char *response_message;
-                int complete_message_length = end_of_message - message_buffer + 4;                 // 计算完整消息的长度
-                response_message = Response(message_buffer, complete_message_length, client_sock); // 解析完整的HTTP请求
-                printf("Response message: %s\n", response_message);
+                int complete_message_length = end_of_message - buf + 4;      // 计算完整消息的长度
+                response_message = Response(buf, complete_message_length, client_sock); // 解析完整的HTTP请求
+                // printf("Response message: %s\n", response_message);
                 send(client_sock, response_message, strlen(response_message), 0); // 发送响应
-                close_socket(client_sock);
-                memset(message_buffer, 0, sizeof(message_buffer));                // 重置消息缓冲区
-            }
-        }
+                // 清空缓冲区
+                memset(message_buffer, 0, sizeof(message_buffer));
+                message_length = 0;
+            memset(buf, 0, BUF_SIZE);   
 
-        if (readret < 0)
-        {
-            perror("recv");
+                // close_socket(client_sock);
+            }
         }
 
         if (readret == -1) // 如果读取失败

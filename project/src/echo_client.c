@@ -27,11 +27,14 @@
 
 int main(int argc, char* argv[])
 {
-    if (argc != 4)
+    if (argc <= 3)
     {
         fprintf(stderr, "usage: %s <server-ip> <port> <file-path>",argv[0]);
         return EXIT_FAILURE;
     }
+    // 获取参数个数
+    
+    
 
     char buf[BUF_SIZE]; // 数据缓冲区
         
@@ -69,11 +72,10 @@ int main(int argc, char* argv[])
 #endif
 
 
-    // char msg[BUF_SIZE]; 
-    // fgets(msg, BUF_SIZE, stdin); // 从控制台输入数据，这里修改为从文件接收数据
-
-    /* 从文件读取请求 */
-    FILE *file = fopen(argv[3], "r");
+for(int i=3;i<argc;i++){
+    /* 从文件读取请求 并发送*/
+    FILE *file = fopen(argv[i], "r");
+    
     if (file == NULL) {
         fprintf(stderr, "Failed to open file\n");
         return EXIT_FAILURE;
@@ -85,20 +87,20 @@ int main(int argc, char* argv[])
         fprintf(stdout, "Sending %s", msg);
     }
     fclose(file);
-    /* 从文件读取请求 */
+    /* 从文件读取请求 并发送 */
 
-    // fprintf(stdout, "Sending %s", msg);
-    // send(sock, msg , strlen(msg), 0); // 向服务端发送数据
-
+    /* 接收服务器发送的相应 */
     int bytes_received;
     if((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1) // 从服务器获得的消息，服务端经过解析之后发送的
     {
         buf[bytes_received] = '\0';
 
         fprintf(stdout, "Received %s", buf);
-    }       
+    }
+    /* 接收服务器发送的相应 */
+}
 
     freeaddrinfo(servinfo);
-    close(sock);    
+    close(sock);
     return EXIT_SUCCESS;
 }

@@ -1,5 +1,5 @@
 rm -f project.tar
 
 cd project
-tar -czvf "../project.tar" ./*
+tar -czvf "../webSocket.tar" ./*
 cd ..
