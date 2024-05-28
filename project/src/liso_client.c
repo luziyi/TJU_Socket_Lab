@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 
         /* 接收服务器发送的相应 */
         int bytes_received;
-        if ((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1) // 从服务器获得的消息，服务端经过解析之后发送的
+        while ((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1) // 从服务器获得的消息，服务端经过解析之后发送的
         {
             buf[bytes_received] = '\0';
 

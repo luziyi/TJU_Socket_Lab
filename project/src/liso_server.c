@@ -20,13 +20,13 @@
 #include <unistd.h>
 #include "response.h"
 #define ECHO_PORT 9999
-#define BUF_SIZE 4096
+#define BUF_SIZE 81920
 
 // #define DEBUG
 
 char message_buffer[BUF_SIZE * 2]; // 一个足够大的缓冲区来保存累积的数据
 int message_length = 0;
-
+int bias = 0;
 int close_socket(int sock)
 {
     if (close(sock))
@@ -113,38 +113,39 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Message buffer overflow.\n");
                 break;
             }
-            // 如果message_buffer末尾的4个字符是\r\n\r\n，则表示消息结束
-            char *end_of_message = strstr(buf, "\r\n\r\n");
-            // 将第一个请求放入待解析区域
-            if (end_of_message != NULL)
-            {
-                char *response_message;
-                int complete_message_length = end_of_message - buf + 4;      // 计算完整消息的长度
-                response_message = Response(buf, complete_message_length, client_sock); // 解析完整的HTTP请求
-                // printf("Response message: %s\n", response_message);
-                send(client_sock, response_message, strlen(response_message), 0); // 发送响应
-                // 清空缓冲区
-                memset(message_buffer, 0, sizeof(message_buffer));
-                message_length = 0;
-            memset(buf, 0, BUF_SIZE);   
 
+            char response_buffer[1024];
+            strncpy(response_buffer, message_buffer + bias, 1024);
+            // 如果message_buffer末尾的4个字符是\r\n\r\n，则表示消息结束
+            char *end_of_message = strstr(response_buffer, "\r\n\r\n");
+            // 将第一个请求放入待解析区域
+            while (end_of_message != NULL)
+            {
+                void *response_message;
+                int complete_message_length = end_of_message - response_buffer + 4;                 // 计算完整消息的长度
+                Response(response_buffer, complete_message_length, client_sock); // 解析完整的HTTP请求
+                bias += complete_message_length;
+                memset(response_buffer, 0, 1024);
+                strncpy(response_buffer, message_buffer + bias, 1024);
+                // printf("===========response_buffer===========\n%s\n", response_buffer);
+                end_of_message = strstr(response_buffer, "\r\n\r\n");
                 // close_socket(client_sock);
             }
-        }
 
-        if (readret == -1) // 如果读取失败
-        {
-            close_socket(client_sock);
-            close_socket(sock);
-            fprintf(stderr, "Error reading from client socket.\n");
-            return EXIT_FAILURE;
-        }
+            if (readret == -1) // 如果读取失败
+            {
+                close_socket(client_sock);
+                close_socket(sock);
+                fprintf(stderr, "Error reading from client socket.\n");
+                return EXIT_FAILURE;
+            }
 
-        if (close_socket(client_sock))
-        {
-            close_socket(sock);
-            fprintf(stderr, "Error closing client socket.\n");
-            return EXIT_FAILURE;
+            if (close_socket(client_sock))
+            {
+                close_socket(sock);
+                fprintf(stderr, "Error closing client socket.\n");
+                return EXIT_FAILURE;
+            }
         }
     }
 

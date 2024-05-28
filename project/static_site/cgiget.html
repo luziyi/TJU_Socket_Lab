@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<!-- This is a GET form Loader -->
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Liso Register and Login</title>
+		<link rel="stylesheet" type="text/css" href="style.css" /> 
+		<style type="text/css">
+p{
+	text-align: center;
+}
+	button{
+		text-align: center;
+	}
+	.login-button1 { /* 按钮美化 */
+		width: 200px; /* 宽度 */
+		height: 30px; /* 高度 */
+		border-width: 0px; /* 边框宽度 */
+		border-radius: 3px; /* 边框半径 */
+		background: #0E90FF; /* 背景颜色 */
+		cursor: pointer; /* 鼠标移入按钮范围时出现手势 */
+		outline: none; /* 不显示轮廓线 */
+		font-family: Microsoft YaHei; /* 设置字体 */
+		color: white; /* 字体颜色 */
+		font-size: 17px; /* 字体大小 */
+	}
+	.login-button { /* 按钮美化 */
+		width: 100px; /* 宽度 */
+		height: 30px; /* 高度 */
+		border-width: 0px; /* 边框宽度 */
+		border-radius: 3px; /* 边框半径 */
+		background: #0E90FF; /* 背景颜色 */
+		cursor: pointer; /* 鼠标移入按钮范围时出现手势 */
+		outline: none; /* 不显示轮廓线 */
+		font-family: Microsoft YaHei; /* 设置字体 */
+		color: white; /* 字体颜色 */
+		font-size: 17px; /* 字体大小 */
+	}
+	.login-button:hover { /* 鼠标移入按钮范围时改变颜色 */
+		background: #5599FF;
+	}
+		</style>
+	</head>
+	<body>
+		<img src="images/liso_header.png" alt="Liso the Friendly Web Server"></img>
+		<div id="header" style="background-color:#FFA500;text-align: center;">
+			<h1 >登陆、注册接口</h1>
+			<h2 >请求方法：GET</h2>
+		</div>
+
+		<div id="content" style="background-color:#000000; margin: 0px auto;">	
+			<form method="get" action="/">
+				<p> <button class="login-button1" type="submit">Back to Home Page</button></p>
+			</form>		
+
+			<div id="form" style="align-self: center;">
+				<form id="form1" onsubmit="return false" action="##" method="get" class="centered">
+					<p>User Name: <input name="userName" type="text" id="txtUserName" style="align-self: center;"/></p>
+					<p>Password: <input name="password" type="password" id="txtPassword"/></p>
+					<p><button type="button" class="login-button" onclick="Login()">LOGIN</button>&nbsp;<button class="login-button" type="button" onclick="Register()">REGISTER</button></p>
+				</form>
+			</div>
+		</div>
+		<p id="Msg"></p>
+		<p id="demo"></p>
+		<p id="info"></p>
+		<p id="secret"></p>
+		<div id="footer" style="background-color:#FFA500;clear:both;text-align:center;">
+			版权 © Christopher Liu, TJU, 3020202184
+		</div>
+		<script>
+			function Login(){
+				var xhttp = new XMLHttpRequest();
+				var userName = document.getElementById("txtUserName").value;
+				var passWord = document.getElementById("txtPassword").value;
+				xhttp.onreadystatechange = function(){
+					if (this.readyState == 4 && this.status==200){
+						var obj = JSON.parse(this.responseText)
+						document.getElementById("Msg").innerHTML = "登陆结果：";
+						var results = obj["Results"];
+						document.getElementById("demo").innerHTML="您好！来自 ip:" + results["Ip"] + " 的 " + decodeURIComponent(results["name"]) + " 您的登陆信息如下";
+						if(obj["Code"]==="400"){
+							document.getElementById("info").innerHTML="登陆失败！<br>" + obj["Msg"];
+						}else{
+							document.getElementById("info").innerHTML="登陆成功！<br>"+ "您是第 " + results["number"] + " 位用户<br>" +  "注册的时间是 " + results["created_at"] + "<br>" + "上次登陆的 Ip 地址为 " + results["lastIp"];
+						}
+						//					document.getElementById("secret").innerHTML = "";
+					}
+				};
+				var uri = "/cgi/login.py";
+				var para = "uName=" + userName + "&uPass=" + passWord;
+				xhttp.open("GET", uri + "?" + para, true);
+				xhttp.send();
+			}
+function Register(){
+	var xhttp = new XMLHttpRequest();
+	var userName = document.getElementById("txtUserName").value;
+	var passWord = document.getElementById("txtPassword").value;
+	xhttp.onreadystatechange = function(){
+		if (this.readyState==4 && this.status==200){
+			var obj = JSON.parse(this.responseText)
+			document.getElementById("Msg").innerHTML = "注册结果：";
+			var results = obj["Results"];
+			document.getElementById("demo").innerHTML="您好！来自 ip:" + results["Ip"] + " 的 " + decodeURIComponent(results["name"]) + " 您的注册信息如下";
+			if(obj["Code"]==="400"){
+				document.getElementById("info").innerHTML="注册失败！<br>" + obj["Msg"];
+			}else {
+				document.getElementById("info").innerHTML="注册成功！<br>您注册的时间是 " + results["created_at"] + "<br>您的密码为 " + results["pass"] + "<br>您是第 " + results["number"] + " 位注册用户";
+			}
+			//		document.getElementById("secret").innerHTML="您当前使用的注册接口为 GET，有泄密风险，请使用 ... ";
+		}
+	};
+	var uri = "/cgi/register.py";
+	var para = "uName=" + userName + "&uPass=" + passWord;
+	xhttp.open("GET", uri + "?" + para, true);
+	xhttp.send();
+}
+
+		</script>
+	</body>			
+
+</html>
