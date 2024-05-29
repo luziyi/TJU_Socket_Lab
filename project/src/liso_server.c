@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in addr, cli_addr;
     char buf[BUF_SIZE];
 
-    fprintf(stdout, "----- Echo Server -----\n");
+    fprintf(stdout, "========== Echo Server ==========\n");
 
     /* all networked programs must create a socket */
     if ((sock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
@@ -127,9 +127,7 @@ int main(int argc, char *argv[])
                 bias += complete_message_length;
                 memset(response_buffer, 0, 1024);
                 strncpy(response_buffer, message_buffer + bias, 1024);
-                // printf("===========response_buffer===========\n%s\n", response_buffer);
                 end_of_message = strstr(response_buffer, "\r\n\r\n");
-                // close_socket(client_sock);
             }
 
             if (readret == -1) // 如果读取失败
