@@ -19,7 +19,7 @@ char RESPONSE_400[4096] = "HTTP/1.1 400 Bad request\r\n\r\n";
 char RESPONSE_404[4096] = "HTTP/1.1 404 Not Found\r\n\r\n";
 char RESPONSE_501[4096] = "HTTP/1.1 501 Not Implemented\r\n\r\n";
 char RESPONSE_505[4096] = "HTTP/1.1 505 HTTP Version not supported\r\n\r\n";
-char RESPONSE_200[4096] = "HTTP/1.1 200 OK\r\n\r\n";
+char RESPONSE_200[4096] = "HTTP/1.1 200 OK\r\n";
 char http_version_now[50] = "HTTP/1.1";
 char root_path[50] = "./static_site";
 char file_path[50] = "/index.html";
@@ -87,6 +87,7 @@ const char *get_mime_type(const char *filename)
 char *Response(char *message_buffer, int complete_message_length, int client_sock)
 {
     char *log;
+   
     struct stat buf;
     time_t now;
     time(&now);
@@ -197,7 +198,7 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
         }
         char *mime_type = get_mime_type(head_URL); // 获取客户端请求的文件类型
         /* 获取客户端请求的文件路径 */
-
+     
         /* 读取处理过后的文件路径 */
         if (stat(head_URL, &buf) == -1)
         {
