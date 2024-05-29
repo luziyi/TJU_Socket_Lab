@@ -7,7 +7,6 @@
 #include <netinet/ip.h>
 #include <fcntl.h>
 #include <time.h>
-#include "logger.h"
 
 #define MAX_MESSAGE_LENGTH 4096
 #define URL_MAX_SIZE 256
@@ -15,8 +14,6 @@
 #define S_ISREG 0100000
 #define S_IRUSR 00400
 #define BUF_SIZE 4096
-
-extern void log(char *filename, char *message);
 
 char RESPONSE_400[4096] = "HTTP/1.1 400 Bad request\r\n\r\n";
 char RESPONSE_404[4096] = "HTTP/1.1 404 Not Found\r\n\r\n";
@@ -27,7 +24,6 @@ char http_version_now[50] = "HTTP/1.1";
 char root_path[50] = "./static_site";
 char file_path[50] = "/index.html";
 int response_message_length;
-
 
 char *convertTimestampToDate(time_t timestamp)
 {
@@ -88,8 +84,9 @@ const char *get_mime_type(const char *filename)
     return "text/plain";
 }
 
-void Response(char *message_buffer, int complete_message_length, int client_sock)
+char *Response(char *message_buffer, int complete_message_length, int client_sock)
 {
+    char *log;
     struct stat buf;
     time_t now;
     time(&now);
@@ -102,6 +99,10 @@ void Response(char *message_buffer, int complete_message_length, int client_sock
         memset(response_message, 0, strlen(RESPONSE_400));
         memcpy(response_message, RESPONSE_400, strlen(RESPONSE_400));
         response_message_length = strlen(RESPONSE_400);
+        char response_message_length_str[10];
+        sprintf(response_message_length_str, "%d", response_message_length);
+        log = malloc(strlen(RESPONSE_400) + strlen("Message size:") + strlen(response_message_length_str) + 1);
+        sprintf(log, "%s Message size:%d", RESPONSE_400, response_message_length);
     }
     else if (strcmp(request->http_version, "HTTP/1.1") != 0)
     {
@@ -109,6 +110,10 @@ void Response(char *message_buffer, int complete_message_length, int client_sock
         memset(response_message, 0, strlen(RESPONSE_505));
         memcpy(response_message, RESPONSE_505, strlen(RESPONSE_505));
         response_message_length = strlen(RESPONSE_505);
+        char response_message_length_str[10];
+        sprintf(response_message_length_str, "%d", response_message_length);
+        log = malloc(strlen(RESPONSE_505) + strlen("Message size:") + strlen(response_message_length_str) + 1);
+        sprintf(log, "%s Message size:%d", RESPONSE_505, response_message_length);
     }
     else if (strcmp(request->http_method, "GET") == 0)
     {
@@ -164,6 +169,15 @@ void Response(char *message_buffer, int complete_message_length, int client_sock
 
                 response_message_length = strlen(response_header) + buf.st_size;
 
+                free(file_content);
+                free(response_header);
+
+                char response_message_length_str[10];
+                sprintf(response_message_length_str, "%d", response_message_length);
+                log = malloc(strlen(RESPONSE_200) + strlen("Message size:") + strlen(response_message_length_str) + 1);
+                sprintf(log, "%s Message size:%d", RESPONSE_200, response_message_length);
+
+
             }
         }
     }
@@ -213,6 +227,13 @@ void Response(char *message_buffer, int complete_message_length, int client_sock
                 memcpy(response_message, response_header, strlen(response_header));
                 response_message_length = strlen(response_header);
 
+                free(response_header);
+
+                char response_message_length_str[10];
+                sprintf(response_message_length_str, "%d", response_message_length);
+                log = malloc(strlen(RESPONSE_200) + strlen("Message size:") + strlen(response_message_length_str) + 1);
+                sprintf(log, "%s Message size:%d", RESPONSE_200, response_message_length);
+
             }
         }
         /* 读取处理过后的文件路径 */
@@ -223,13 +244,24 @@ void Response(char *message_buffer, int complete_message_length, int client_sock
         memset(response_message, 0, complete_message_length);
         memcpy(response_message, message_buffer, complete_message_length);
         response_message_length = complete_message_length;
+
+        char response_message_length_str[10];
+        sprintf(response_message_length_str, "%d", response_message_length);
+        log = malloc(strlen(RESPONSE_200) + strlen("Message size:") + strlen(response_message_length_str) + 1);
+        sprintf(log, "%s Message size:%d", RESPONSE_200, response_message_length);
     }
     else
     {
         response_message = RESPONSE_501;
         response_message_length = strlen(RESPONSE_501);
+        char response_message_length_str[10];
+        sprintf(response_message_length_str, "%d", response_message_length);
+        log = malloc(strlen(RESPONSE_501) + strlen("Message size:") + strlen(response_message_length_str) + 1);
+        sprintf(log, "%s Message size:%d", RESPONSE_501, response_message_length);
     }
 
     free(request);
     send(client_sock, response_message, response_message_length, 0);
+    free(response_message);
+    return log;
 }

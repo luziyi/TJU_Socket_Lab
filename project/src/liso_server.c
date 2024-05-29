@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "response.h"
-
+#include "logger.h"
 #define ECHO_PORT 9999
 #define BUF_SIZE 81920
 
@@ -32,7 +32,7 @@ int close_socket(int sock)
 {
     if (close(sock))
     {
-        log("error.log", "Failed closing socket.\n");
+        log("error.log", "[INFO] Failed closing socket.\n", LOG_LEVEL_ERROR);
         fprintf(stderr, "Failed closing socket.\n");
         return 1;
     }
@@ -41,7 +41,11 @@ int close_socket(int sock)
 
 int main(int argc, char *argv[])
 {
+    time_t now;
+    char *temp_log;
+    char *access_log;
     int sock, client_sock;
+    char *log_message;
     ssize_t readret;
     socklen_t cli_size;
     struct sockaddr_in addr, cli_addr;
@@ -52,7 +56,12 @@ int main(int argc, char *argv[])
     /* all networked programs must create a socket */
     if ((sock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
     {
+        time(&now);
         fprintf(stderr, "Failed creating socket.\n");
+        log_message = malloc(100);
+        memset(log_message, 0, 100);
+        sprintf(log_message, "[DATE]%s [INFO] Failed creating socket.", convertTimestampToDate(now));
+        log("error.log", log_message, LOG_LEVEL_ERROR);
         return EXIT_FAILURE;
     }
 
@@ -63,9 +72,12 @@ int main(int argc, char *argv[])
     /* servers bind sockets to ports---notify the OS they accept connections */
     if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)))
     {
-        log("error.log", "Failed binding socket.\n");
         close_socket(sock);
         fprintf(stderr, "Failed binding socket.\n");
+        log_message = malloc(100);
+        memset(log_message, 0, 100);
+        sprintf(log_message, "[DATE]%s [INFO] Failed binding socket.", convertTimestampToDate(now));
+        log("error.log", log_message, LOG_LEVEL_ERROR);
         return EXIT_FAILURE;
     }
 
@@ -74,8 +86,13 @@ int main(int argc, char *argv[])
     {
         close_socket(sock);
         fprintf(stderr, "Error listening on socket.\n");
+        log_message = malloc(100);
+        memset(log_message, 0, 100);
+        sprintf(log_message, "[DATE]%s [INFO] Error listening on socket.", convertTimestampToDate(now));
+        log("error.log", log_message, LOG_LEVEL_ERROR);
         return EXIT_FAILURE;
     }
+    // 获取客户端ip
 
     /* finally, loop waiting for input and then write it back */
     while (1)
@@ -93,10 +110,20 @@ int main(int argc, char *argv[])
         {
             close(sock);
             fprintf(stderr, "Error accepting connection.\n");
+            log_message = malloc(100);
+            memset(log_message, 0, 100);
+            sprintf(log_message, "[DATE]%s [INFO] Error accepting connection.", convertTimestampToDate(now));
+            log("error.log", log_message, LOG_LEVEL_ERROR);
             return EXIT_FAILURE;
         }
 
         readret = 0;
+
+        // 获取客户端ip
+        char client_ip[20];
+        inet_ntop(AF_INET, &cli_addr.sin_addr, client_ip, sizeof(client_ip));
+        char client_info[50];
+        fprintf(client_info, "[ClientIP:port]%s:%d\n", client_ip, ECHO_PORT);
 
         while ((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
         {
@@ -104,6 +131,7 @@ int main(int argc, char *argv[])
             fprintf(stdout, "Received %d bytes.\n", (int)readret);
             fprintf(stdout, "Received message: %.*s\n", (int)readret, buf);
 #endif
+
             // 将接收到的数据追加到消息缓冲区
             if (message_length + readret < sizeof(message_buffer))
             {
@@ -114,6 +142,10 @@ int main(int argc, char *argv[])
             else
             {
                 fprintf(stderr, "Message buffer overflow.\n");
+                log_message = malloc(100);
+                memset(log_message, 0, 100);
+                sprintf(log_message, "[DATE]%s [INFO] Message buffer overflow.", convertTimestampToDate(now));
+                log("error.log", log_message, LOG_LEVEL_ERROR);
                 break;
             }
 
@@ -125,8 +157,12 @@ int main(int argc, char *argv[])
             while (end_of_message != NULL)
             {
                 void *response_message;
-                int complete_message_length = end_of_message - response_buffer + 4;                 // 计算完整消息的长度
-                Response(response_buffer, complete_message_length, client_sock); // 解析完整的HTTP请求
+                int complete_message_length = end_of_message - response_buffer + 4;         // 计算完整消息的长度
+                temp_log = Response(response_buffer, complete_message_length, client_sock); // 解析完整的HTTP请求
+                log_message = malloc(strlen(client_info) + strlen(convertTimestampToDate(now)) + strlen(temp_log) + 16);
+                fprintf(log_message, "[DATE]%s %s [INFO] %s", convertTimestampToDate(now), client_info, temp_log);
+                log("access.log", log_message, LOG_LEVEL_INFO);
+                free(temp_log);
                 bias += complete_message_length;
                 memset(response_buffer, 0, 1024);
                 strncpy(response_buffer, message_buffer + bias, 1024);

@@ -11,7 +11,7 @@ CC  := gcc
 # C预处理器标志
 CPPFLAGS := -Iinclude
 # 编译器标志
-CFLAGS   := -g -Wall
+CFLAGS   := -g -Wall -w
 # 依赖文件
 # DEPS = parse.h y.tab.h
 
@@ -42,5 +42,5 @@ $(OBJ_DIR):
 	mkdir $@
 
 clean:
-	$(RM) $(OBJ) $(BIN) $(SRC_DIR)/lex.yy.c $(SRC_DIR)/y.tab.*
+	$(RM) $(OBJ) $(BIN) $(SRC_DIR)/lex.yy.c $(SRC_DIR)/y.tab.* 
 	$(RM) -r $(OBJ_DIR)

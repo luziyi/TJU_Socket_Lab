@@ -76,6 +76,7 @@
         "stdlib.h": "c",
         "stdio.h": "c",
         "ip.h": "c",
-        "response.h": "c"
+        "response.h": "c",
+        "string.h": "c"
     }
 }
