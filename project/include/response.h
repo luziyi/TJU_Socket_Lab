@@ -7,6 +7,7 @@
 #include <netinet/ip.h>
 #include <fcntl.h>
 #include <time.h>
+#include <errno.h>
 
 #define MAX_MESSAGE_LENGTH 4096
 #define URL_MAX_SIZE 256
@@ -19,7 +20,7 @@ char RESPONSE_400[4096] = "HTTP/1.1 400 Bad request\r\n\r\n";
 char RESPONSE_404[4096] = "HTTP/1.1 404 Not Found\r\n\r\n";
 char RESPONSE_501[4096] = "HTTP/1.1 501 Not Implemented\r\n\r\n";
 char RESPONSE_505[4096] = "HTTP/1.1 505 HTTP Version not supported\r\n\r\n";
-char RESPONSE_200[4096] = "HTTP/1.1 200 OK\r\n";
+char RESPONSE_200[4096] = "HTTP/1.1 200 OK\r\n\r\n";
 char http_version_now[50] = "HTTP/1.1";
 char root_path[50] = "./static_site";
 char file_path[50] = "/index.html";
@@ -84,11 +85,10 @@ const char *get_mime_type(const char *filename)
     return "text/plain";
 }
 
-char *Response(char *message_buffer, int complete_message_length, int client_sock)
+void Response(char *message_buffer, int complete_message_length, int client_sock, char *log)
 {
-    char *log;
-   
     struct stat buf;
+    char response_length_str[10];
     time_t now;
     time(&now);
     void *response_message;
@@ -100,10 +100,7 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
         memset(response_message, 0, strlen(RESPONSE_400));
         memcpy(response_message, RESPONSE_400, strlen(RESPONSE_400));
         response_message_length = strlen(RESPONSE_400);
-        char response_message_length_str[10];
-        sprintf(response_message_length_str, "%d", response_message_length);
-        log = malloc(strlen(RESPONSE_400) + strlen("Message size:") + strlen(response_message_length_str) + 1);
-        sprintf(log, "%s Message size:%d", RESPONSE_400, response_message_length);
+        memcpy(log, "400 Bad request", strlen("400 Bad request"));
     }
     else if (strcmp(request->http_version, "HTTP/1.1") != 0)
     {
@@ -111,10 +108,7 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
         memset(response_message, 0, strlen(RESPONSE_505));
         memcpy(response_message, RESPONSE_505, strlen(RESPONSE_505));
         response_message_length = strlen(RESPONSE_505);
-        char response_message_length_str[10];
-        sprintf(response_message_length_str, "%d", response_message_length);
-        log = malloc(strlen(RESPONSE_505) + strlen("Message size:") + strlen(response_message_length_str) + 1);
-        sprintf(log, "%s Message size:%d", RESPONSE_505, response_message_length);
+        memcpy(log, "505 HTTP Version not supported", strlen("505 HTTP Version not supported"));
     }
     else if (strcmp(request->http_method, "GET") == 0)
     {
@@ -136,10 +130,47 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
         /* 读取处理过后的文件路径 */
         if (stat(head_URL, &buf) == -1)
         {
-            response_message = malloc(strlen(RESPONSE_404));
-            memset(response_message, 0, strlen(RESPONSE_404));
-            memcpy(response_message, RESPONSE_404, strlen(RESPONSE_404));
-            response_message_length = strlen(RESPONSE_404);
+            // 根据不同的错误判断是Permission denied还是Not Found还是IO error 还是Out of memory 还是 UNknown error
+            if (errno == EACCES)
+            {
+                response_message = malloc(strlen("HTTP/1.1 404 Permission Denied\r\n\r\n"));
+                memset(response_message, 0, strlen("HTTP/1.1 404 Permission Denied\r\n\r\n"));
+                memcpy(response_message, "HTTP/1.1 404 Permission Denied\r\n\r\n", strlen("HTTP/1.1 404 Permission Denied\r\n\r\n"));
+                response_message_length = strlen("HTTP/1.1 404 Permission Denied\r\n\r\n");
+                memcpy(log, "404 Permission Denied", strlen("404 Permission Denied"));
+            }
+            else if (errno == ENOENT)
+            {
+                response_message = malloc(strlen("HTTP/1.1 404 Not Found\r\n\r\n"));
+                memset(response_message, 0, strlen("HTTP/1.1 404 Not Found\r\n\r\n"));
+                memcpy(response_message, "HTTP/1.1 404 Not Found\r\n\r\n", strlen("HTTP/1.1 404 Not Found\r\n\r\n"));
+                response_message_length = strlen("HTTP/1.1 404 Not Found\r\n\r\n");
+                memcpy(log, "404 Not Found", strlen("404 Not Found"));
+            }
+            else if (errno == EIO)
+            {
+                response_message = malloc(strlen("HTTP/1.1 404 IO Error\r\n\r\n"));
+                memset(response_message, 0, strlen("HTTP/1.1 404 IO Error\r\n\r\n"));
+                memcpy(response_message, "HTTP/1.1 404 IO Error\r\n\r\n", strlen("HTTP/1.1 404 IO Error\r\n\r\n"));
+                response_message_length = strlen("HTTP/1.1 404 IO Error\r\n\r\n");
+                memcpy(log, "404 IO Error", strlen("404 IO Error"));
+            }
+            else if (errno == ENOMEM)
+            {
+                response_message = malloc(strlen("HTTP/1.1 404 Out of Memory\r\n\r\n"));
+                memset(response_message, 0, strlen("HTTP/1.1 404 Out of Memory\r\n\r\n"));
+                memcpy(response_message, "HTTP/1.1 404 Out of Memory\r\n\r\n", strlen("HTTP/1.1 404 Out of Memory\r\n\r\n"));
+                response_message_length = strlen("HTTP/1.1 404 Out of Memory\r\n\r\n");
+                memcpy(log, "404 Out of Memory", strlen("404 Out of Memory"));
+            }
+            else
+            {
+                response_message = malloc(strlen("HTTP/1.1 404 Unknown Error\r\n\r\n"));
+                memset(response_message, 0, strlen("HTTP/1.1 404 Unknown Error\r\n\r\n"));
+                memcpy(response_message, "HTTP/1.1 404 Unknown Error\r\n\r\n", strlen("HTTP/1.1 404 Unknown Error\r\n\r\n"));
+                response_message_length = strlen("HTTP/1.1 404 Unknown Error\r\n\r\n");
+                memcpy(log, "404 Unknown Error", strlen("404 Unknown Error"));
+            }
         }
         else
         {
@@ -151,6 +182,7 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
                 memset(response_message, 0, strlen(RESPONSE_404));
                 memcpy(response_message, RESPONSE_404, strlen(RESPONSE_404));
                 response_message_length = strlen(RESPONSE_404);
+
             }
             else
             {
@@ -170,15 +202,7 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
 
                 response_message_length = strlen(response_header) + buf.st_size;
 
-                free(file_content);
-                free(response_header);
-
-                char response_message_length_str[10];
-                sprintf(response_message_length_str, "%d", response_message_length);
-                log = malloc(strlen(RESPONSE_200) + strlen("Message size:") + strlen(response_message_length_str) + 1);
-                sprintf(log, "%s Message size:%d", RESPONSE_200, response_message_length);
-
-
+                memcpy(log, "200 OK", strlen("200 OK"));
             }
         }
     }
@@ -198,7 +222,7 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
         }
         char *mime_type = get_mime_type(head_URL); // 获取客户端请求的文件类型
         /* 获取客户端请求的文件路径 */
-     
+
         /* 读取处理过后的文件路径 */
         if (stat(head_URL, &buf) == -1)
         {
@@ -228,13 +252,7 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
                 memcpy(response_message, response_header, strlen(response_header));
                 response_message_length = strlen(response_header);
 
-                free(response_header);
-
-                char response_message_length_str[10];
-                sprintf(response_message_length_str, "%d", response_message_length);
-                log = malloc(strlen(RESPONSE_200) + strlen("Message size:") + strlen(response_message_length_str) + 1);
-                sprintf(log, "%s Message size:%d", RESPONSE_200, response_message_length);
-
+                memcpy(log, "200 OK", strlen("200 OK"));
             }
         }
         /* 读取处理过后的文件路径 */
@@ -245,24 +263,19 @@ char *Response(char *message_buffer, int complete_message_length, int client_soc
         memset(response_message, 0, complete_message_length);
         memcpy(response_message, message_buffer, complete_message_length);
         response_message_length = complete_message_length;
-
-        char response_message_length_str[10];
-        sprintf(response_message_length_str, "%d", response_message_length);
-        log = malloc(strlen(RESPONSE_200) + strlen("Message size:") + strlen(response_message_length_str) + 1);
-        sprintf(log, "%s Message size:%d", RESPONSE_200, response_message_length);
+        memcpy(log, "POST!!", strlen("POST!!"));
     }
     else
     {
         response_message = RESPONSE_501;
         response_message_length = strlen(RESPONSE_501);
-        char response_message_length_str[10];
-        sprintf(response_message_length_str, "%d", response_message_length);
-        log = malloc(strlen(RESPONSE_501) + strlen("Message size:") + strlen(response_message_length_str) + 1);
-        sprintf(log, "%s Message size:%d", RESPONSE_501, response_message_length);
+        memcpy(log, "501 Not Implemented", strlen("501 Not Implemented"));
     }
 
     free(request);
+    sprintf(response_length_str, "%d", response_message_length);
+    strcat(log, "\tSIZE:");
+    strcat(log, response_length_str);
+    strcat(log, "\0");
     send(client_sock, response_message, response_message_length, 0);
-    free(response_message);
-    return log;
 }

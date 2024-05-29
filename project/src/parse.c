@@ -71,9 +71,7 @@ Request *parse(char *buffer, int size, int socketFd)
 		request->header_count = 0;
 		// TODO You will need to handle resizing this in parser.y
 		request->headers = (Request_header *)malloc(sizeof(Request_header) * 100);
-#ifdef PARSEDEBUG
 		printf("==========Parsing buf==========\n%s\n", buf);
-#endif
 		set_parsing_options(buf, i - n, request);
 		// 输出buf
 		if (yyparse() == SUCCESS)
