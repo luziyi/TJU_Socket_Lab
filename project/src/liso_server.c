@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include "response.h"
+
 #define ECHO_PORT 9999
 #define BUF_SIZE 81920
 
@@ -31,6 +32,7 @@ int close_socket(int sock)
 {
     if (close(sock))
     {
+        log("error.log", "Failed closing socket.\n");
         fprintf(stderr, "Failed closing socket.\n");
         return 1;
     }
@@ -61,6 +63,7 @@ int main(int argc, char *argv[])
     /* servers bind sockets to ports---notify the OS they accept connections */
     if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)))
     {
+        log("error.log", "Failed binding socket.\n");
         close_socket(sock);
         fprintf(stderr, "Failed binding socket.\n");
         return EXIT_FAILURE;

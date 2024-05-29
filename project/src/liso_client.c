@@ -91,15 +91,14 @@ int main(int argc, char *argv[])
         fclose(file);
         /* 从文件读取请求 并发送 */
 
-        /* 接收服务器发送的相应 */
+        /* 接收服务器发送的响应 */
         int bytes_received;
         while ((bytes_received = recv(sock, buf, BUF_SIZE, 0)) > 1) // 从服务器获得的消息，服务端经过解析之后发送的
         {
             buf[bytes_received] = '\0';
-
             fprintf(stdout, "Received %s", buf);
         }
-        /* 接收服务器发送的相应 */
+        /* 接收服务器发送的响应 */
     }
 
     freeaddrinfo(servinfo);

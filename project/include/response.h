@@ -7,6 +7,7 @@
 #include <netinet/ip.h>
 #include <fcntl.h>
 #include <time.h>
+#include "logger.h"
 
 #define MAX_MESSAGE_LENGTH 4096
 #define URL_MAX_SIZE 256
@@ -14,6 +15,8 @@
 #define S_ISREG 0100000
 #define S_IRUSR 00400
 #define BUF_SIZE 4096
+
+extern void log(char *filename, char *message);
 
 char RESPONSE_400[4096] = "HTTP/1.1 400 Bad request\r\n\r\n";
 char RESPONSE_404[4096] = "HTTP/1.1 404 Not Found\r\n\r\n";
