@@ -35,38 +35,6 @@ char *convertTimestampToDate(time_t timestamp)
     return formattedDate;
 }
 
-char *base64_encode(const char *data, int data_len)
-{
-    // base64编码表
-    char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    // 返回值
-    char *res = (char *)malloc(sizeof(char) * (data_len * 4 / 3 + 4));
-    // 每次取3个字节，编码成4个字符
-    int pos = 0;
-    for (int i = 0; i < data_len; i += 3)
-    {
-        // 取3个字节
-        int val = data[i] << 16;
-        if (i + 1 < data_len)
-            val |= data[i + 1] << 8;
-        if (i + 2 < data_len)
-            val |= data[i + 2];
-        // 编码成4个字符
-        res[pos++] = table[(val >> 18) & 0x3F];
-        res[pos++] = table[(val >> 12) & 0x3F];
-        if (i + 1 < data_len)
-            res[pos++] = table[(val >> 6) & 0x3F];
-        else
-            res[pos++] = '=';
-        if (i + 2 < data_len)
-            res[pos++] = table[val & 0x3F];
-        else
-            res[pos++] = '=';
-    }
-    res[pos] = '\0';
-    return res;
-}
-
 const char *get_mime_type(const char *filename)
 {
     const char *dot = strrchr(filename, '.');
@@ -83,6 +51,17 @@ const char *get_mime_type(const char *filename)
     if (strcmp(dot, ".js") == 0)
         return "application/javascript";
     return "text/plain";
+}
+
+void strccpy(char *dest, const char *src, size_t max, char stopChar) {
+    size_t i;
+    for (i = 0; i < max - 1; ++i) { // -1 为了保留空间给结尾的空字符
+        if ((src[i] == stopChar) || (src[i] == '\0')) {
+            break;
+        }
+        dest[i] = src[i];
+    }
+    dest[i] = '\0'; // 确保字符串以空字符结尾
 }
 
 void Response(char *message_buffer, int complete_message_length, int client_sock, char *log)
@@ -116,14 +95,37 @@ void Response(char *message_buffer, int complete_message_length, int client_sock
         char head_URL[256];
         memset(head_URL, 0, sizeof(head_URL));
         strcat(head_URL, root_path);
-        if (strcmp(request->http_uri, "/") == 0)
+
+        // 处理路径中的？
+        char *question_mark = strchr(request->http_uri, '?');
+        if (question_mark != NULL)
+        {
+            *question_mark = '\0';
+        }
+        // 将?前后的字符串分别存储在path和query中
+        char path[URL_MAX_SIZE];
+        char query[URL_MAX_SIZE];
+        memset(path, 0, sizeof(path));
+        memset(query, 0, sizeof(query));
+        strcpy(path, request->http_uri);
+        if (question_mark != NULL)
+        {
+            strcpy(query, question_mark + 1);
+        }
+
+        printf("path: %s\n", path);
+        printf("query: %s\n", query);
+
+        if (strcmp(path, "/") == 0)
         {
             strcat(head_URL, file_path); // 将index.html加入到head_URL中
         }
         else
         {
-            strcat(head_URL, request->http_uri); // 将请求的文件加入到head_URL中
+            strcat(head_URL, path); // 将请求的文件加入到head_URL中
         }
+
+
         char *mime_type = get_mime_type(head_URL); // 获取客户端请求的文件类型
         /* 获取客户端请求的文件路径 */
 
@@ -182,7 +184,6 @@ void Response(char *message_buffer, int complete_message_length, int client_sock
                 memset(response_message, 0, strlen(RESPONSE_404));
                 memcpy(response_message, RESPONSE_404, strlen(RESPONSE_404));
                 response_message_length = strlen(RESPONSE_404);
-
             }
             else
             {

@@ -20,13 +20,15 @@
 #include <unistd.h>
 #include "response.h"
 #include "logger.h"
+#include <sys/select.h>
+
 #define MAX_CLIENT 1024
 #define ECHO_PORT 9999
 #define BUF_SIZE 81920
 
 // #define DEBUG
 
-char message_buffer[BUF_SIZE * 2]; // 一个足够大的缓冲区来保存累积的数据
+char *message_buffer; // 一个足够大的缓冲区来保存累积的数据
 int message_length = 0;
 int bias = 0;
 int close_socket(int sock)
@@ -80,19 +82,18 @@ int main(int argc, char *argv[])
     }
 
     // 获取客户端ip
-    //fd初始化
-     int fd_client[MAX_CLIENT];
+    // fd初始化
+    int fd_client[MAX_CLIENT]= {-1};
     int client_count = 0;
-    fd_set tmp_fd;
+    fd_set tmp_fd; //
     fd_set ready_fd;
-    
-    int max_fd = sock;
-    FD_ZERO(&tmp_fd);
-    FD_ZERO(&ready_fd);
-    FD_SET(sock, &ready_fd);
 
-    for (int i = 0; i < MAX_CLIENT; i++)
-        fd_client[i] = -1;
+    int max_fd = sock;
+    FD_ZERO(&tmp_fd);        // 初始化 套接字组
+    FD_ZERO(&ready_fd);      //
+    FD_SET(sock, &ready_fd); // 将sock加入到ready_fd中
+
+
     while (1)
     {
         /**
@@ -116,40 +117,40 @@ int main(int argc, char *argv[])
         {
             continue;
         }
-        if (FD_ISSET(sock, &tmp_fd))//sock在tmp_fd中
+        if (FD_ISSET(sock, &tmp_fd)) // 如果sock在tmp_fd中
         {
             cli_size = sizeof(cli_addr);
-            client_sock = accept(sock, (struct sockaddr *)&cli_addr, &cli_size);//接受连接
+            client_sock = accept(sock, (struct sockaddr *)&cli_addr, &cli_size); // 接受连接
             if (client_sock < 0)
                 continue;
             for (int i = 0; i < MAX_CLIENT; i++)
             {
-                if (fd_client[i] == -1)//找到一个空闲的位置
+                if (fd_client[i] == -1) // 找到一个空闲的位置
                 {
-                   // printf("insert in : %d\n", i);
-                    fd_client[i] = client_sock;//插
+                    // printf("insert in : %d\n", i);
+                    fd_client[i] = client_sock; // 插入到fd_client中
                     FD_SET(client_sock, &ready_fd);
                     max_fd = (client_sock > max_fd) ? client_sock : max_fd;
                     break;
                 }
-                if(i == MAX_CLIENT - 1)
+                if (i == MAX_CLIENT - 1)
                 {
                     log("error.log", "Clients Overflow!", LOG_LEVEL_ERROR, NULL);
                     return EXIT_FAILURE;
                 }
-            }    
+            }
         }
-        
 
+        /*cli_size = sizeof(cli_addr);
+         if ((client_sock = accept(sock, (struct sockaddr *)&cli_addr, &cli_size)) == -1)
+         {
+             close(sock);
+             log("error.log", "Error accepting connection.", LOG_LEVEL_ERROR, NULL);
+             fprintf(stderr, "Error accepting connection.\n");
+             return EXIT_FAILURE;
+         }*/
 
-       /*cli_size = sizeof(cli_addr);
-        if ((client_sock = accept(sock, (struct sockaddr *)&cli_addr, &cli_size)) == -1)
-        {
-            close(sock);
-            log("error.log", "Error accepting connection.", LOG_LEVEL_ERROR, NULL);
-            fprintf(stderr, "Error accepting connection.\n");
-            return EXIT_FAILURE;
-        }*/
+        /* 挨个从客户端sock 接收信息并解析 */
         for (int i = 0; i < MAX_CLIENT; i++)
         {
             if (fd_client[i] < 0)
@@ -157,84 +158,77 @@ int main(int argc, char *argv[])
             client_sock = fd_client[i];
             if (FD_ISSET(client_sock, &ready_fd))
             {
-        readret = 0;
-        char client_ip[64];
-        inet_ntop(AF_INET, &(cli_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
-        printf("Connected client IP: %s\n", client_ip);
-        //while ((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
-        //这里不用while 因为一个坏了不能坏其他的 
-        readret = recv(client_sock, buf, BUF_SIZE, 0);
-         if (readret <= 0)
+                readret = 0;
+                char client_ip[64];
+                inet_ntop(AF_INET, &(cli_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
+                printf("Connected client IP: %s\n", client_ip);
+                // while ((readret = recv(client_sock, buf, BUF_SIZE, 0)) >= 1)
+                // 这里不用while 因为其中一个client断开连接，会导致后面的client无法接收消息
+                readret = recv(client_sock, buf, BUF_SIZE, 0);
+                if (readret <= 0)
                 {
                     close_socket(client_sock);
                     FD_CLR(client_sock, &ready_fd);
                     fd_client[i] = -1;
                     log("error.log", "Error reading from client socket.", LOG_LEVEL_ERROR, client_ip);
                 }
-         else
-        
-        {
+                else
+
+                {
 #ifdef DEBUG
-            fprintf(stdout, "Received %d bytes.\n", (int)readret);
-            fprintf(stdout, "Received message: %.*s\n", (int)readret, buf);
+                    fprintf(stdout, "Received %d bytes.\n", (int)readret);
+                    fprintf(stdout, "Received message: %.*s\n", (int)readret, buf);
 #endif
-            // 将接收到的数据追加到消息缓冲区
-            if (message_length + readret < sizeof(message_buffer))
-            {
-                memcpy(message_buffer + message_length, buf, readret);
-                message_length += readret;
-                message_buffer[message_length] = '\0'; // 确保缓冲区以NULL结尾
-            }
-            else
-            {
-                log("error.log", "Message buffer overflow.", LOG_LEVEL_ERROR, client_ip);
-                fprintf(stderr, "Message buffer overflow.\n");
-                break;
-            }
+                    // 将接收到的数据追加到消息缓冲区
 
-            char response_buffer[1024];
-            strncpy(response_buffer, message_buffer + bias, 1024);
-            // 如果message_buffer末尾的4个字符是\r\n\r\n，则表示消息结束
-            char *end_of_message = strstr(response_buffer, "\r\n\r\n");
-            // 将第一个请求放入待解析区域
-            while (end_of_message != NULL)
-            {
-                char *log_message;
-                void *response_message;
-                log_message = malloc(1024);
-                int complete_message_length = end_of_message - response_buffer + 4;           // 计算完整消息的长度
-                Response(response_buffer, complete_message_length, client_sock, log_message); // 解析完整的HTTP请求
-                printf("log_message: %s\n", log_message);
-                if (log_message != NULL)
-                    log("access.log", log_message, LOG_LEVEL_INFO, client_ip);
-                bias += complete_message_length;
-                memset(response_buffer, 0, 1024);
-                strncpy(response_buffer, message_buffer + bias, 1024);
-                end_of_message = strstr(response_buffer, "\r\n\r\n");
-            }
+                    message_buffer = realloc(message_buffer, message_length + readret + 1);
+                    memcpy(message_buffer + message_length, buf, readret);
+                    message_length += readret;
+                    message_buffer[message_length] = '\0'; // 确保缓冲区以NULL结尾
 
-            if (readret == -1) // 如果读取失败
-            {
+                    char response_buffer[1024];
+                    strncpy(response_buffer, message_buffer + bias, 1024);
+                    // 如果message_buffer末尾的4个字符是\r\n\r\n，则表示消息结束
+                    char *end_of_message = strstr(response_buffer, "\r\n\r\n");
+                    // 将第一个请求放入待解析区域
+                    while (end_of_message != NULL)
+                    {
+                        char *log_message;
+                        void *response_message;
+                        log_message = malloc(1024);
+                        int complete_message_length = end_of_message - response_buffer + 4;           // 计算完整消息的长度
+                        Response(response_buffer, complete_message_length, client_sock, log_message); // 解析完整的HTTP请求
+                        printf("log_message: %s\n", log_message);
+                        if (log_message != NULL)
+                            log("access.log", log_message, LOG_LEVEL_INFO, client_ip);
+                        bias += complete_message_length;
+                        memset(response_buffer, 0, 1024);
+                        strncpy(response_buffer, message_buffer + bias, 1024);
+                        end_of_message = strstr(response_buffer, "\r\n\r\n");
+                    }
+
+                    if (readret == -1) // 如果读取失败
+                    {
+                        close_socket(client_sock);
+                        close_socket(sock);
+                        fprintf(stderr, "Error reading from client socket.\n");
+                        return EXIT_FAILURE;
+                    }
+                    /*
+                    if (close_socket(client_sock))
+                    {
+                        close_socket(sock);
+                        fprintf(stderr, "Error closing client socket.\n");
+                        return EXIT_FAILURE;
+                    }*/
+                }
+                FD_CLR(client_sock, &ready_fd);
+                fd_client[i] = -1;
                 close_socket(client_sock);
-                close_socket(sock);
-                fprintf(stderr, "Error reading from client socket.\n");
-                return EXIT_FAILURE;
-            }
-            /*
-            if (close_socket(client_sock))
-            {
-                close_socket(sock);
-                fprintf(stderr, "Error closing client socket.\n");
-                return EXIT_FAILURE;
-            }*/
-        }
-        FD_CLR(client_sock, &ready_fd);
-        fd_client[i] = -1;
-        close_socket(client_sock);
             }
         }
-   } 
-   close_socket(sock);
+        /* 挨个从客户端sock 接收信息并解析 */
+    }
+    close_socket(sock);
     return EXIT_SUCCESS;
-
 }
