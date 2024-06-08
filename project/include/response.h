@@ -8,6 +8,9 @@
 #include <fcntl.h>
 #include <time.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include "cgi.h"
 
 #define MAX_MESSAGE_LENGTH 4096
 #define URL_MAX_SIZE 256
@@ -25,6 +28,7 @@ char http_version_now[50] = "HTTP/1.1";
 char root_path[50] = "./static_site";
 char file_path[50] = "/index.html";
 int response_message_length;
+
 
 char *convertTimestampToDate(time_t timestamp)
 {
@@ -128,7 +132,13 @@ void Response(char *message_buffer, int complete_message_length, int client_sock
 
         char *mime_type = get_mime_type(head_URL); // 获取客户端请求的文件类型
         /* 获取客户端请求的文件路径 */
-
+        // 如果客户端是cgi请求
+        if (strstr(path, "cgi-bin") != NULL)
+        {
+            printf("cgi-bin\n");
+            execute_cgi(client_sock, path, query);
+            return;
+        }
         /* 读取处理过后的文件路径 */
         if (stat(head_URL, &buf) == -1)
         {

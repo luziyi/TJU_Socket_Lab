@@ -20,7 +20,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
-#define ECHO_PORT 9999 // 端口
+#define ECHO_PORT 8888 // 端口
 #define BUF_SIZE 4096  // 缓冲区大小
 
 // #define DEBUG // DEBUG开关

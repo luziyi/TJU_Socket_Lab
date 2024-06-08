@@ -66,7 +66,7 @@ p{
 		<p id="info"></p>
 		<p id="secret"></p>
 		<div id="footer" style="background-color:#FFA500;clear:both;text-align:center;">
-			版权 © Christopher Liu, TJU, 3020202184
+			版权 © TommyGong 2024 All Rights Reserved 3022206045
 		</div>
 		<script>
 			function Login(){
@@ -74,20 +74,18 @@ p{
 				var userName = document.getElementById("txtUserName").value;
 				var passWord = document.getElementById("txtPassword").value;
 				xhttp.onreadystatechange = function(){
-					if (this.readyState == 4 && this.status==200){
-						var obj = JSON.parse(this.responseText)
-						document.getElementById("Msg").innerHTML = "登陆结果：";
+					if (this.status==200){
+						var obj = JSON.parse(this.responseText);
 						var results = obj["Results"];
-						document.getElementById("demo").innerHTML="您好！来自 ip:" + results["Ip"] + " 的 " + decodeURIComponent(results["name"]) + " 您的登陆信息如下";
 						if(obj["Code"]==="400"){
-							document.getElementById("info").innerHTML="登陆失败！<br>" + obj["Msg"];
+							document.getElementById("info").innerHTML="登陆失败！" + obj["Msg"]+"正确密码应该是"+results["password"];
 						}else{
-							document.getElementById("info").innerHTML="登陆成功！<br>"+ "您是第 " + results["number"] + " 位用户<br>" +  "注册的时间是 " + results["created_at"] + "<br>" + "上次登陆的 Ip 地址为 " + results["lastIp"];
+							document.getElementById("info").innerHTML="登陆成功！"+ obj["Msg"] + "您好 " + results["username"];
 						}
 						//					document.getElementById("secret").innerHTML = "";
 					}
 				};
-				var uri = "/cgi/login.py";
+				var uri = "/cgi-bin/login";
 				var para = "uName=" + userName + "&uPass=" + passWord;
 				xhttp.open("GET", uri + "?" + para, true);
 				xhttp.send();
@@ -97,20 +95,18 @@ function Register(){
 	var userName = document.getElementById("txtUserName").value;
 	var passWord = document.getElementById("txtPassword").value;
 	xhttp.onreadystatechange = function(){
-		if (this.readyState==4 && this.status==200){
-			var obj = JSON.parse(this.responseText)
-			document.getElementById("Msg").innerHTML = "注册结果：";
+		if (this.status==200){
+			var obj = JSON.parse(this.responseText);
 			var results = obj["Results"];
-			document.getElementById("demo").innerHTML="您好！来自 ip:" + results["Ip"] + " 的 " + decodeURIComponent(results["name"]) + " 您的注册信息如下";
 			if(obj["Code"]==="400"){
-				document.getElementById("info").innerHTML="注册失败！<br>" + obj["Msg"];
+				document.getElementById("info").innerHTML="注册失败！"+ obj["Msg"];
 			}else {
-				document.getElementById("info").innerHTML="注册成功！<br>您注册的时间是 " + results["created_at"] + "<br>您的密码为 " + results["pass"] + "<br>您是第 " + results["number"] + " 位注册用户";
+				document.getElementById("info").innerHTML="注册成功！"+ obj["Msg"]+ "<br>您的账号是:" + results["username"]+ "<br>您的密码为:" + results["password"];
 			}
 			//		document.getElementById("secret").innerHTML="您当前使用的注册接口为 GET，有泄密风险，请使用 ... ";
 		}
 	};
-	var uri = "/cgi/register.py";
+	var uri = "/cgi-bin/register";
 	var para = "uName=" + userName + "&uPass=" + passWord;
 	xhttp.open("GET", uri + "?" + para, true);
 	xhttp.send();
